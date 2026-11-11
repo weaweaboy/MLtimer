@@ -1,0 +1,2917 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>簡報演講大師計時器 - Presentation Master Timer</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Noto Sans TC', 'Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
+                    },
+                    screens: {
+                        'xs': '475px',
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome 圖示庫 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google 字型載入庫 (包含 18 款特色風格字型) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Bebas+Neue&family=Black+Ops+One&family=Cabin+Sketch:wght@700&family=Caveat:wght@700&family=Chakra+Petch:wght@700;900&family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@700;900&family=Courier+Prime:wght@700&family=Dancing+Script:wght@700&family=Fredoka+One&family=Fredoka:wght@600;700&family=Fredericka+the+Great&family=Inter:wght@100;200;400;700;800;900&family=Michroma&family=Mochiy+Pop+One&family=Monoton&family=Montserrat:wght@800;900&family=Noto+Sans+TC:wght@400;500;700;900&family=Orbitron:wght@700;800;900&family=Outfit:wght@800;900&family=Pacifico&family=Patrick+Hand&family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Poppins:wght@800;900&family=Press+Start+2P&family=Quicksand:wght@700&family=Rubik+Mono+One&family=Share+Tech+Mono&family=Silkscreen:wght@700&family=Sniglet:wght@800&family=Special+Elite&family=Teko:wght@700&family=Tilt+Neon&family=Titan+One&family=VT323&family=Vampiro+One&display=swap" rel="stylesheet">
+    <!-- QR Code 自動生成函式庫 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Noto Sans TC', 'Inter', sans-serif;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        /* 美化滾動條 */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(51, 65, 85, 0.8);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(71, 85, 105, 1);
+        }
+
+        /* 18 款字體風格 CSS Class */
+        .font-style-sans { font-family: 'Noto Sans TC', 'Inter', sans-serif; }
+        .font-style-serif { font-family: 'Playfair Display', 'Cinzel', serif; font-variant-numeric: tabular-nums; }
+        .font-style-digital { font-family: 'Orbitron', 'Share Tech Mono', 'VT323', monospace; letter-spacing: 0.04em; }
+        .font-style-geometric { font-family: 'Montserrat', 'Outfit', 'Poppins', sans-serif; font-weight: 900; }
+        .font-style-rounded { font-family: 'Fredoka', 'Quicksand', sans-serif; font-weight: 700; }
+        .font-style-flip { font-family: 'Bebas Neue', 'Teko', 'Impact', sans-serif; letter-spacing: 0.05em; }
+        .font-style-typewriter { font-family: 'Courier Prime', 'Special Elite', monospace; font-weight: 700; }
+        .font-style-pixel { font-family: 'Press Start 2P', 'Silkscreen', monospace; font-size: 0.7em; }
+        .font-style-heavy { font-family: 'Black Ops One', 'Rubik Mono One', cursive; }
+        .font-style-ultralight { font-family: 'Inter', sans-serif; font-weight: 200; letter-spacing: -0.02em; }
+        .font-style-handwriting { font-family: 'Caveat', 'Patrick Hand', 'Architects Daughter', cursive; font-weight: 700; }
+        .font-style-jelly { font-family: 'Titan One', 'Sniglet', 'Fredoka One', cursive; text-shadow: 2px 4px 8px rgba(0,0,0,0.4); }
+        .font-style-metallic { font-family: 'Chakra Petch', 'Michroma', 'Orbitron', sans-serif; font-weight: 900; letter-spacing: 0.06em; }
+        .font-style-fluffy { font-family: 'Mochiy Pop One', cursive; font-weight: 700; }
+        .font-style-botanical { font-family: 'Cinzel Decorative', 'Playfair Display', serif; font-weight: 700; }
+        .font-style-literary { font-family: 'Dancing Script', 'Caveat', cursive; font-weight: 700; }
+        .font-style-chalkboard { font-family: 'Cabin Sketch', 'Fredericka the Great', cursive; font-weight: 700; }
+        .font-style-vintage { font-family: 'Pacifico', 'Monoton', cursive; font-weight: 700; }
+        .font-style-neon { font-family: 'Tilt Neon', 'Vampiro One', 'Monoton', cursive; letter-spacing: 0.05em; text-shadow: 0 0 10px currentColor; }
+    </style>
+</head>
+<body id="appBody" class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
+
+    <!-- 隱藏 Canvas 與 Video (解析度：1600x900 供畫中畫使用) -->
+    <canvas id="pipCanvas" width="1600" height="900" class="hidden"></canvas>
+    <video id="pipVideo" autoplay muted class="hidden"></video>
+
+    <!-- 頂部導覽與工具列 -->
+    <header class="bg-slate-900/90 backdrop-blur border-b border-slate-800 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+            
+            <!-- 標題與 LOGO -->
+            <div class="flex items-center justify-between w-full lg:w-auto">
+                <div class="flex items-center space-x-2.5 sm:space-x-3">
+                    <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center shadow-lg shadow-indigo-500/20 flex-shrink-0">
+                        <i class="fa-solid fa-stopwatch text-white text-base sm:text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-sm sm:text-lg font-bold text-white tracking-wide flex items-center gap-2">
+                            <span>簡報演講大師</span>
+                            <span class="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded-full font-mono">副螢幕完全強化版</span>
+                        </h1>
+                        <p class="text-[10px] sm:text-xs text-slate-400">雙螢幕響應式演講計時與講者控制中心</p>
+                    </div>
+                </div>
+
+                <!-- 系統時鐘 (手機版) -->
+                <div class="flex lg:hidden items-center space-x-1.5 text-slate-300 bg-slate-800/90 px-2.5 py-1 rounded-lg border border-slate-700/60 shadow-sm">
+                    <i class="fa-regular fa-clock text-indigo-400 text-xs"></i>
+                    <span id="currentLocalTimeMobile" class="font-style-serif text-xs font-semibold text-white">12:00</span>
+                </div>
+            </div>
+
+            <!-- 目前時間與顯示切換工具欄 -->
+            <div class="flex items-center justify-between lg:justify-end space-x-2 sm:space-x-3 w-full lg:w-auto flex-wrap gap-y-2">
+                <!-- 系統時鐘 (桌機版) -->
+                <div class="hidden lg:flex items-center space-x-2 text-slate-300 bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700/50">
+                    <i class="fa-regular fa-clock text-indigo-400"></i>
+                    <span class="text-xs text-slate-400">現在時間:</span>
+                    <span id="currentLocalTime" class="font-style-serif text-sm font-semibold text-white">12:00:00</span>
+                </div>
+
+                <!-- 懸浮與獨立視窗控制按鈕群 -->
+                <div class="grid grid-cols-2 xs:flex xs:items-center xs:space-x-2 gap-2 w-full lg:w-auto">
+                    <button id="pipBtn" title="開啟畫中畫懸浮窗 (P)" class="px-3 py-2 xs:py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs sm:text-sm font-medium transition flex items-center justify-center space-x-1.5 shadow-md active:scale-95">
+                        <i class="fa-solid fa-window-restore"></i>
+                        <span>畫中畫 (P)</span>
+                    </button>
+                    <button id="popoutBtn" title="開啟完整響應式副螢幕視窗" class="px-3 py-2 xs:py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-xs sm:text-sm font-medium transition flex items-center justify-center space-x-1.5 shadow-md shadow-amber-600/25 active:scale-95">
+                        <i class="fa-solid fa-desktop"></i>
+                        <span>副螢幕講者視窗</span>
+                    </button>
+                    <!-- 新增：獨立分頁/網頁連結副螢幕 -->
+                    <button id="openStandaloneWebBtn" title="以獨立網頁開起副螢幕 (可分享連結)" class="px-3 py-2 xs:py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs sm:text-sm font-medium transition flex items-center justify-center space-x-1.5 shadow-md shadow-cyan-600/25 active:scale-95">
+                        <i class="fa-solid fa-up-right-from-square"></i>
+                        <span>獨立網頁副螢幕</span>
+                    </button>
+
+                    <!-- 手機同步 QR Code 按鈕 -->
+                    <button id="qrCodeModalBtn" title="開啟手機同步 QR Code" class="px-3 py-2 xs:py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs sm:text-sm font-medium transition flex items-center justify-center space-x-1.5 active:scale-95 shadow-md shadow-emerald-600/20">
+                        <i class="fa-solid fa-qrcode"></i>
+                        <span>行動同步 QR</span>
+                    </button>
+
+                    <!-- 畫中畫獨立縮放組 -->
+                    <div class="hidden sm:flex items-center space-x-1 bg-slate-800 border border-slate-700 rounded-lg p-0.5" title="畫中畫懸浮窗數字縮放">
+                        <span class="text-[10px] text-slate-400 px-1 hidden xl:inline font-medium"><i class="fa-solid fa-magnifying-glass-plus mr-0.5"></i>縮放:</span>
+                        <button id="zoomOutBtn" class="px-2 py-1 text-xs text-slate-300 hover:bg-slate-700 rounded transition font-bold" title="縮小便當盒"><i class="fa-solid fa-minus"></i></button>
+                        <button id="zoomResetBtn" class="px-2 py-1 text-xs text-slate-400 hover:text-white hover:bg-slate-700 rounded transition" title="重置比例"><span id="zoomPercentLabel">100%</span></button>
+                        <button id="zoomInBtn" class="px-2 py-1 text-xs text-slate-300 hover:bg-slate-700 rounded transition font-bold" title="放大數字"><i class="fa-solid fa-plus"></i></button>
+                    </div>
+
+                    <!-- 副螢幕獨立縮放組 -->
+                    <div class="hidden xl:flex items-center space-x-1 bg-amber-950/40 border border-amber-700/50 rounded-lg p-0.5" title="副螢幕視窗數字獨立縮放">
+                        <span class="text-[10px] text-amber-400 px-1 font-semibold">副螢幕:</span>
+                        <button id="popoutZoomOutBtn" class="px-2 py-1 text-xs text-amber-300 hover:bg-amber-900/60 rounded transition font-bold"><i class="fa-solid fa-minus"></i></button>
+                        <button id="popoutZoomResetBtn" class="px-2 py-1 text-xs text-amber-400 hover:bg-amber-900/60 rounded transition"><span id="popoutZoomPercentLabel">100%</span></button>
+                        <button id="popoutZoomInBtn" class="px-2 py-1 text-xs text-amber-300 hover:bg-amber-900/60 rounded transition font-bold"><i class="fa-solid fa-plus"></i></button>
+                    </div>
+
+                    <button id="fullscreenBtn" title="切換全螢幕 (F)" class="px-3 py-2 xs:py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg transition active:scale-95 shadow flex items-center justify-center space-x-1">
+                        <i id="fullscreenIcon" class="fa-solid fa-expand"></i>
+                        <span class="text-xs font-medium hidden sm:inline">全螢幕 (F)</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主要內容區塊 -->
+    <main class="max-w-7xl mx-auto w-full px-3 sm:px-4 py-4 sm:py-6 flex-grow flex flex-col lg:flex-row gap-4 sm:gap-6">
+
+        <!-- 左側：計時器主要顯示與控制 -->
+        <div class="flex-grow flex flex-col space-y-4 sm:space-y-6 min-w-0">
+
+            <!-- 折疊式進階設定控制中心 -->
+            <div class="bg-slate-900/70 rounded-xl border border-slate-800 overflow-hidden shadow-md">
+                <button id="toggleSettingsPanelBtn" class="w-full px-4 py-3 bg-slate-800/80 hover:bg-slate-800 flex items-center justify-between text-xs sm:text-sm font-bold text-slate-200 transition">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa-solid fa-sliders text-indigo-400"></i>
+                        <span>進階外觀、響應式字體與副螢幕設定中心</span>
+                    </div>
+                    <div class="flex items-center space-x-1 text-xs text-indigo-300">
+                        <span id="settingsToggleText">展開設定</span>
+                        <i id="settingsToggleIcon" class="fa-solid fa-chevron-down transition-transform duration-300"></i>
+                    </div>
+                </button>
+
+                <div id="settingsPanelContent" class="hidden p-3 sm:p-5 space-y-4 border-t border-slate-800/80 text-xs">
+                    
+                    <!-- 1. 基本模式與字體 -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pb-3 border-b border-slate-800">
+                        <div class="flex flex-col space-y-1.5">
+                            <span class="font-bold text-slate-400"><i class="fa-solid fa-toggle-on text-indigo-400 mr-1"></i>計時模式:</span>
+                            <div class="flex space-x-1">
+                                <button id="modeCountdownBtn" class="flex-1 px-3 py-2 rounded-lg text-xs font-semibold transition bg-indigo-600 text-white shadow">
+                                    <i class="fa-solid fa-hourglass-half mr-1"></i>倒數計時
+                                </button>
+                                <button id="modeStopwatchBtn" class="flex-1 px-3 py-2 rounded-lg text-xs font-semibold transition text-slate-400 hover:text-white hover:bg-slate-800">
+                                    <i class="fa-solid fa-stopwatch mr-1"></i>正數碼錶
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col space-y-1.5">
+                            <span class="font-bold text-indigo-200"><i class="fa-solid fa-font text-indigo-400 mr-1"></i>主畫面計時字體風格:</span>
+                            <select id="fontStyleSelect" class="w-full bg-slate-900 border border-indigo-600 text-white text-xs rounded-md px-2.5 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400 cursor-pointer font-medium">
+                                <option value="digital">1. 數位電子管風格 (Orbitron / LED)</option>
+                                <option value="geometric">2. 幾何無襯線風格 (Geometric Sans)</option>
+                                <option value="rounded">3. 圓體風格 (Fredoka / Rounded)</option>
+                                <option value="serif" selected>4. 古典襯線風格 (Classic Serif)</option>
+                                <option value="flip">5. 傳統翻頁鐘風格 (Flip Clock)</option>
+                                <option value="typewriter">6. 機械打字機風格 (Typewriter)</option>
+                                <option value="pixel">7. 經典像素風 (Pixel 8-Bit)</option>
+                                <option value="heavy">8. 新潮液態/極粗風格 (Heavy Black)</option>
+                                <option value="ultralight">9. 輕量極細風格 (Ultra Light)</option>
+                                <option value="handwriting">10. 人手書寫風格 (Handwriting)</option>
+                                <option value="jelly">11. 3D 果凍 / 泡泡糖 (Jelly Bubble)</option>
+                                <option value="metallic">12. 金屬機械風 (Metallic Sci-Fi)</option>
+                                <option value="fluffy">13. 毛茸茸 / 絨毛風 (Fluffy Soft)</option>
+                                <option value="botanical">14. 植物花草風 (Botanical Floral)</option>
+                                <option value="literary">15. 文青手寫風 (Literary Script)</option>
+                                <option value="chalkboard">16. 粉筆手繪風 (Chalkboard Sketch)</option>
+                                <option value="vintage">17. 復古美式招牌 (Vintage Diner)</option>
+                                <option value="neon">18. 霓虹燈管風 (Neon Sign Light)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 2. 主畫面與背景設定 -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pb-3 border-b border-slate-800">
+                        <div class="flex items-center space-x-1.5 bg-slate-800/80 px-2.5 py-2 rounded-lg border border-slate-700/60">
+                            <i class="fa-solid fa-circle-half-stroke text-indigo-400"></i>
+                            <span class="text-slate-400 font-medium">卡片透明度:</span>
+                            <input id="bgOpacityInput" type="range" min="0" max="100" value="90" class="w-16 h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+                            <span id="bgOpacityLabel" class="text-slate-300 w-7 text-right text-[11px]">90%</span>
+                        </div>
+
+                        <div class="flex items-center space-x-1.5 bg-slate-800/80 px-2.5 py-2 rounded-lg border border-slate-700/60">
+                            <i class="fa-solid fa-mountain-sun text-indigo-400"></i>
+                            <span class="text-slate-400 font-medium">主畫面背景:</span>
+                            <label class="px-2 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-xs cursor-pointer transition">
+                                <span>上傳圖片</span>
+                                <input id="bgFileInput" type="file" accept="image/*" class="hidden">
+                            </label>
+                            <button id="clearBgBtn" title="移除背景圖" class="hidden text-slate-400 hover:text-rose-400 px-1"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+
+                        <div class="flex items-center space-x-1.5 bg-amber-950/40 px-2.5 py-2 rounded-lg border border-amber-700/50">
+                            <i class="fa-solid fa-desktop text-amber-400"></i>
+                            <span class="text-amber-400 font-medium">副螢幕背景:</span>
+                            <label class="px-2 py-1 bg-amber-600 hover:bg-amber-500 text-white rounded text-xs cursor-pointer transition">
+                                <span>上傳圖片</span>
+                                <input id="popoutBgFileInput" type="file" accept="image/*" class="hidden">
+                            </label>
+                            <button id="clearPopoutBgBtn" title="移除副螢幕背景圖" class="hidden text-amber-400 hover:text-rose-400 px-1"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- 3. Logo 圖檔與縮放位置設定 -->
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pb-3 border-b border-slate-800 bg-slate-800/40 p-2.5 rounded-lg border border-slate-700/50">
+                        <div class="flex items-center space-x-2">
+                            <i class="fa-solid fa-image text-indigo-400"></i>
+                            <span class="text-slate-300 font-semibold">品牌 Logo 設定:</span>
+                            <label class="px-2 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-xs cursor-pointer transition">
+                                <span>上傳 Logo</span>
+                                <input id="logoFileInput" type="file" accept="image/*" class="hidden">
+                            </label>
+                            <button id="clearLogoBtn" title="移除 Logo" class="hidden text-slate-400 hover:text-rose-400 px-1"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+
+                        <div id="logoScaleContainer" class="hidden flex items-center space-x-2 flex-wrap gap-y-1">
+                            <span class="text-slate-400">尺寸:</span>
+                            <button id="logoZoomOutBtn" class="px-1.5 py-0.5 bg-slate-700 rounded text-slate-200"><i class="fa-solid fa-minus text-[10px]"></i></button>
+                            <input id="logoScaleInput" type="range" min="30" max="300" value="100" class="w-16 h-1 bg-slate-700 rounded accent-indigo-500">
+                            <button id="logoZoomInBtn" class="px-1.5 py-0.5 bg-slate-700 rounded text-slate-200"><i class="fa-solid fa-plus text-[10px]"></i></button>
+                            <span id="logoScaleLabel" class="text-indigo-300 font-mono w-8 text-right">100%</span>
+
+                            <span class="text-slate-400 ml-2">位置:</span>
+                            <select id="logoPositionSelect" class="bg-slate-900 border border-slate-700 text-indigo-200 text-xs rounded px-2 py-1 focus:outline-none">
+                                <option value="top-right" selected>右上</option>
+                                <option value="top-left">左上</option>
+                                <option value="center">正中</option>
+                                <option value="bottom-left">左下</option>
+                                <option value="bottom-right">右下</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 4. 畫中畫與副螢幕講者顏色/高度設定 -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-3 border-b border-slate-800">
+                        <!-- 畫中畫專屬設定 -->
+                        <div class="p-3 bg-slate-800/50 rounded-lg border border-slate-700/60 space-y-2">
+                            <div class="font-bold text-indigo-300 flex items-center space-x-1"><i class="fa-solid fa-window-restore"></i><span>畫中畫進階控制</span></div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="text-[11px] text-slate-400 block mb-0.5">畫中畫字色:</label>
+                                    <select id="pipColorSelect" class="w-full bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded px-2 py-1">
+                                        <option value="#22c55e" selected>翡翠綠</option>
+                                        <option value="#eab308">黃金黃</option>
+                                        <option value="#38bdf8">天天空藍</option>
+                                        <option value="#ffffff">極致純白</option>
+                                        <option value="#f43f5e">鮮艷玫瑰紅</option>
+                                        <option value="#f97316">活力亮橘</option>
+                                        <option value="#a855f7">電光紫</option>
+                                        <option value="#ec4899">霓虹粉紅</option>
+                                        <option value="#14b8a6">薄荷青綠</option>
+                                        <option value="#facc15">檸檬鮮黃</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-[11px] text-slate-400 block mb-0.5">背景材質風格:</label>
+                                    <select id="pipMaterialSelect" class="w-full bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded px-2 py-1">
+                                        <option value="transparent" selected>透明無背景</option>
+                                        <option value="frosted-glass">磨砂玻璃</option>
+                                        <option value="acrylic">壓克力質感</option>
+                                        <option value="resin">高光樹脂</option>
+                                        <option value="classic-dark">經典深色</option>
+                                        <option value="classic-light">經典淺色</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="text-[11px] text-slate-400 block mb-0.5">垂直高度平移:</label>
+                                <select id="pipAlignSelect" class="w-full bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded px-2 py-1">
+                                    <option value="-30%">-30% (極靠上)</option>
+                                    <option value="-20%">-20% (偏上)</option>
+                                    <option value="-10%">-10% (微靠上)</option>
+                                    <option value="0%" selected>0% (完全置中)</option>
+                                    <option value="10%">+10% (微靠下)</option>
+                                    <option value="20%">+20% (偏下)</option>
+                                    <option value="30%">+30% (極靠下)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- 副螢幕專屬控制 -->
+                        <div class="p-3 bg-amber-950/20 rounded-lg border border-amber-700/40 space-y-2">
+                            <div class="font-bold text-amber-400 flex items-center space-x-1"><i class="fa-solid fa-desktop"></i><span>副螢幕 RWD 計時數字控制</span></div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="text-[11px] text-amber-300 block mb-0.5">副螢幕數字顏色:</label>
+                                    <select id="popoutColorSelect" class="w-full bg-slate-900 border border-amber-700/70 text-amber-200 text-xs rounded px-2 py-1">
+                                        <option value="text-emerald-400" selected>翡翠綠</option>
+                                        <option value="text-yellow-400">黃金黃</option>
+                                        <option value="text-sky-400">天藍色</option>
+                                        <option value="text-white">極致純白</option>
+                                        <option value="text-rose-400">玫瑰粉紅</option>
+                                        <option value="text-orange-400">活力亮橘</option>
+                                        <option value="text-purple-400">電光紫</option>
+                                        <option value="text-pink-400">霓虹粉紅</option>
+                                        <option value="text-teal-300">薄荷青綠</option>
+                                        <option value="text-amber-300">檸檬鮮黃</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-[11px] text-amber-300 block mb-0.5">垂直高度平移:</label>
+                                    <select id="popoutAlignSelect" class="w-full bg-slate-900 border border-amber-700/70 text-amber-200 text-xs rounded px-2 py-1">
+                                        <option value="-30%">-30% (極靠上)</option>
+                                        <option value="-20%">-20% (偏上)</option>
+                                        <option value="-10%">-10% (微靠上)</option>
+                                        <option value="0%" selected>0% (完全置中)</option>
+                                        <option value="10%">+10% (微靠下)</option>
+                                        <option value="20%">+20% (偏下)</option>
+                                        <option value="30%">+30% (極靠下)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 5. 副螢幕文字、顏色與字體細節設定 -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pb-3 border-b border-slate-800">
+                        <!-- 章節樣式設定 -->
+                        <div class="space-y-1 bg-slate-800/40 p-2.5 rounded-lg border border-slate-700/50">
+                            <span class="font-bold text-indigo-300 block"><i class="fa-solid fa-list-check mr-1"></i>副螢幕章節樣式</span>
+                            <div class="grid grid-cols-3 gap-1">
+                                <select id="popoutSectionColorSelect" class="bg-slate-900 border border-slate-700 text-indigo-200 text-[11px] rounded px-1 py-1">
+                                    <option value="text-indigo-400" selected>1. 經典靛藍</option>
+                                    <option value="text-emerald-400">2. 翡翠鮮綠</option>
+                                    <option value="text-amber-400">3. 琥珀金黃</option>
+                                    <option value="text-white">4. 極致純白</option>
+                                    <option value="text-rose-400">5. 玫瑰紅</option>
+                                    <option value="text-orange-400">6. 活力橘</option>
+                                    <option value="text-purple-400">7. 電光紫</option>
+                                    <option value="text-pink-400">8. 霓虹粉</option>
+                                    <option value="text-teal-300">9. 薄荷青綠</option>
+                                    <option value="text-yellow-300">10. 檸檬鮮黃</option>
+                                    <option value="text-sky-400">11. 天空湛藍</option>
+                                    <option value="text-cyan-300">12. 水藍青</option>
+                                    <option value="text-fuchsia-400">13. 炫彩紫紅</option>
+                                </select>
+                                <select id="popoutSectionSizeSelect" class="bg-slate-900 border border-slate-700 text-indigo-200 text-[11px] rounded px-1 py-1">
+                                    <option value="text-xs">1. 極小 (12px)</option>
+                                    <option value="text-sm">2. 微小 (14px)</option>
+                                    <option value="text-base">3. 標準 (16px)</option>
+                                    <option value="text-lg">4. 中等 (18px)</option>
+                                    <option value="text-xl">5. 微大 (20px)</option>
+                                    <option value="text-2xl" selected>6. 放大 (24px)</option>
+                                    <option value="text-3xl">7. 加大 (30px)</option>
+                                    <option value="text-4xl">8. 特大 (36px)</option>
+                                    <option value="text-5xl">9. 超大 (48px)</option>
+                                    <option value="text-6xl">10. 巨型 (60px)</option>
+                                    <option value="text-7xl">11. 超巨型 (72px)</option>
+                                    <option value="text-8xl">12. 極致巨型 (96px)</option>
+                                    <option value="text-9xl">13. 頂級震撼 (128px)</option>
+                                </select>
+                                <select id="popoutSectionFontSelect" class="bg-slate-900 border border-slate-700 text-indigo-200 text-[11px] rounded px-1 py-1">
+                                    <option value="sans" selected>1. 預設無襯線</option>
+                                    <option value="serif">2. 古典襯線</option>
+                                    <option value="digital">3. 數位電子管</option>
+                                    <option value="geometric">4. 幾何極粗體</option>
+                                    <option value="rounded">5. 圓體風格</option>
+                                    <option value="flip">6. 傳統翻頁鐘</option>
+                                    <option value="typewriter">7. 機械打字機</option>
+                                    <option value="pixel">8. 經典像素風</option>
+                                    <option value="ultralight">9. 輕量極細</option>
+                                    <option value="handwriting">10. 人手書寫</option>
+                                    <option value="jelly">11. 3D果凍泡泡</option>
+                                    <option value="metallic">12. 金屬機械</option>
+                                    <option value="neon">13. 復古霓虹燈</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- 標語樣式設定 -->
+                        <div class="space-y-1 bg-amber-950/20 p-2.5 rounded-lg border border-amber-700/40">
+                            <span class="font-bold text-amber-400 block"><i class="fa-solid fa-note-sticky mr-1"></i>副螢幕備忘/標語樣式</span>
+                            <div class="grid grid-cols-3 gap-1">
+                                <select id="popoutNoteColorSelect" class="bg-slate-900 border border-amber-700/70 text-amber-200 text-[11px] rounded px-1 py-1">
+                                    <option value="bg-amber-500/20 border-amber-500/70 text-amber-200" selected>1. 琥珀金</option>
+                                    <option value="bg-emerald-500/20 border-emerald-500/70 text-emerald-200">2. 翡翠綠</option>
+                                    <option value="bg-indigo-500/20 border-indigo-500/70 text-indigo-200">3. 經典靛藍</option>
+                                    <option value="bg-rose-500/20 border-rose-500/70 text-rose-200">4. 玫瑰紅</option>
+                                    <option value="bg-orange-500/20 border-orange-500/70 text-orange-200">5. 活力亮橘</option>
+                                    <option value="bg-sky-500/20 border-sky-500/70 text-sky-200">6. 天空藍</option>
+                                    <option value="bg-purple-500/20 border-purple-500/70 text-purple-200">7. 電光紫</option>
+                                    <option value="bg-pink-500/20 border-pink-500/70 text-pink-200">8. 霓虹粉</option>
+                                    <option value="bg-teal-500/20 border-teal-500/70 text-teal-200">9. 薄荷青</option>
+                                    <option value="bg-yellow-500/20 border-yellow-500/70 text-yellow-200">10. 檸檬黃</option>
+                                    <option value="bg-cyan-500/20 border-cyan-500/70 text-cyan-200">11. 水藍青</option>
+                                    <option value="bg-fuchsia-500/20 border-fuchsia-500/70 text-fuchsia-200">12. 桃品紅</option>
+                                    <option value="bg-slate-800/90 border-slate-600 text-white">13. 極致純白</option>
+                                </select>
+                                <select id="popoutNoteSizeSelect" class="bg-slate-900 border border-amber-700/70 text-amber-200 text-[11px] rounded px-1 py-1">
+                                    <option value="text-xs">1. 極小 (12px)</option>
+                                    <option value="text-sm">2. 微小 (14px)</option>
+                                    <option value="text-base">3. 標準 (16px)</option>
+                                    <option value="text-lg">4. 中等 (18px)</option>
+                                    <option value="text-xl">5. 微大 (20px)</option>
+                                    <option value="text-2xl" selected>6. 放大 (24px)</option>
+                                    <option value="text-3xl">7. 加大 (30px)</option>
+                                    <option value="text-4xl">8. 特大 (36px)</option>
+                                    <option value="text-5xl">9. 超大 (48px)</option>
+                                    <option value="text-6xl">10. 巨型 (60px)</option>
+                                    <option value="text-7xl">11. 超巨型 (72px)</option>
+                                    <option value="text-8xl">12. 極致巨型 (96px)</option>
+                                    <option value="text-9xl">13. 頂級震撼 (128px)</option>
+                                </select>
+                                <select id="popoutNoteFontSelect" class="bg-slate-900 border border-amber-700/70 text-amber-200 text-[11px] rounded px-1 py-1">
+                                    <option value="sans" selected>1. 預設無襯線</option>
+                                    <option value="serif">2. 古典襯線</option>
+                                    <option value="digital">3. 數位電子管</option>
+                                    <option value="geometric">4. 幾何極粗體</option>
+                                    <option value="rounded">5. 圓體風格</option>
+                                    <option value="flip">6. 傳統翻頁鐘</option>
+                                    <option value="typewriter">7. 機械打字機</option>
+                                    <option value="pixel">8. 經典像素風</option>
+                                    <option value="ultralight">9. 輕量極細</option>
+                                    <option value="handwriting">10. 人手書寫</option>
+                                    <option value="jelly">11. 3D果凍泡泡</option>
+                                    <option value="metallic">12. 金屬機械</option>
+                                    <option value="neon">13. 復古霓虹燈</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- QA 樣式設定 -->
+                        <div class="space-y-1 bg-sky-950/20 p-2.5 rounded-lg border border-sky-700/40">
+                            <span class="font-bold text-sky-300 block"><i class="fa-solid fa-comments mr-1"></i>QA題目樣式</span>
+                            <div class="grid grid-cols-3 gap-1">
+                                <select id="popoutQaColorSelect" class="bg-slate-900 border border-sky-700/70 text-sky-200 text-[11px] rounded px-1 py-1">
+                                    <option value="text-sky-300 bg-sky-500/30 border-sky-400/70" selected>1. 天藍</option>
+                                    <option value="text-emerald-300 bg-emerald-500/30 border-emerald-400/70">2. 翡翠綠</option>
+                                    <option value="text-amber-300 bg-amber-500/30 border-amber-400/70">3. 琥珀金</option>
+                                    <option value="text-indigo-300 bg-indigo-500/30 border-indigo-400/70">4. 經典靛藍</option>
+                                    <option value="text-rose-300 bg-rose-500/30 border-rose-400/70">5. 玫瑰紅</option>
+                                    <option value="text-orange-300 bg-orange-500/30 border-orange-400/70">6. 活力橘</option>
+                                    <option value="text-purple-300 bg-purple-500/30 border-purple-400/70">7. 電光紫</option>
+                                    <option value="text-pink-300 bg-pink-500/30 border-pink-400/70">8. 霓虹粉</option>
+                                    <option value="text-teal-300 bg-teal-500/30 border-teal-400/70">9. 薄荷青</option>
+                                    <option value="text-yellow-300 bg-yellow-500/30 border-yellow-400/70">10. 檸檬黃</option>
+                                    <option value="text-cyan-300 bg-cyan-500/30 border-cyan-400/70">11. 水藍青</option>
+                                    <option value="text-fuchsia-300 bg-fuchsia-500/30 border-fuchsia-400/70">12. 桃紅紫</option>
+                                    <option value="text-white bg-slate-800/80 border-slate-500">13. 極致純白</option>
+                                </select>
+                                <select id="popoutQaSizeSelect" class="bg-slate-900 border border-sky-700/70 text-sky-200 text-[11px] rounded px-1 py-1">
+                                    <option value="text-xs">1. 極小 (12px)</option>
+                                    <option value="text-sm">2. 微小 (14px)</option>
+                                    <option value="text-base">3. 標準 (16px)</option>
+                                    <option value="text-lg">4. 中等 (18px)</option>
+                                    <option value="text-xl">5. 微大 (20px)</option>
+                                    <option value="text-2xl">6. 放大 (24px)</option>
+                                    <option value="text-3xl">7. 加大 (30px)</option>
+                                    <option value="text-4xl" selected>8. 特大 (36px)</option>
+                                    <option value="text-5xl">9. 超大 (48px)</option>
+                                    <option value="text-6xl">10. 巨型 (60px)</option>
+                                    <option value="text-7xl">11. 超巨型 (72px)</option>
+                                    <option value="text-8xl">12. 極致巨型 (96px)</option>
+                                    <option value="text-9xl">13. 頂級震撼 (128px)</option>
+                                </select>
+                                <select id="popoutQaFontSelect" class="bg-slate-900 border border-sky-700/70 text-sky-200 text-[11px] rounded px-1 py-1">
+                                    <option value="sans" selected>1. 預設無襯線</option>
+                                    <option value="serif">2. 古典襯線</option>
+                                    <option value="digital">3. 數位電子管</option>
+                                    <option value="geometric">4. 幾何極粗體</option>
+                                    <option value="rounded">5. 圓體風格</option>
+                                    <option value="flip">6. 傳統翻頁鐘</option>
+                                    <option value="typewriter">7. 機械打字機</option>
+                                    <option value="pixel">8. 經典像素風</option>
+                                    <option value="ultralight">9. 輕量極細</option>
+                                    <option value="handwriting">10. 人手書寫</option>
+                                    <option value="jelly">11. 3D果凍泡泡</option>
+                                    <option value="metallic">12. 金屬機械</option>
+                                    <option value="neon">13. 復古霓虹燈</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 6. 主介面整體配色切換 -->
+                    <div class="flex items-center justify-between pt-1">
+                        <span class="text-slate-400 font-medium"><i class="fa-solid fa-palette text-indigo-400 mr-1"></i>主介面配色佈局:</span>
+                        <div class="flex items-center space-x-1">
+                            <button id="themeDarkBtn" class="px-3 py-1 text-xs rounded bg-indigo-600 border border-indigo-500 text-white font-bold transition shadow">深色</button>
+                            <button id="themeLightBtn" class="px-3 py-1 text-xs rounded bg-slate-800 border border-slate-700 text-slate-400 hover:text-slate-200 transition">淺灰</button>
+                            <button id="themeWhiteBtn" class="px-3 py-1 text-xs rounded bg-slate-800 border border-slate-700 text-slate-400 hover:text-slate-200 transition">純白</button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- 大型計時器顯示卡片 -->
+            <div id="displayCard" class="relative bg-slate-900/90 backdrop-blur-md rounded-2xl border border-slate-800 p-4 sm:p-8 md:p-12 flex flex-col items-center justify-center transition-all duration-300 shadow-2xl min-h-[260px] sm:min-h-[320px] overflow-hidden">
+                
+                <!-- 狀態與段落標示標頭 -->
+                <div class="w-full flex justify-between items-center mb-3 sm:mb-4 gap-2 flex-wrap sm:flex-nowrap">
+                    <div id="statusBadge" class="inline-flex items-center px-2.5 py-0.5 sm:py-1 rounded-full text-[11px] sm:text-xs font-bold bg-slate-500/10 text-slate-400 border border-slate-500/20 uppercase tracking-wider">
+                        <span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-slate-400 mr-1.5"></span>
+                        準備就緒
+                    </div>
+
+                    <!-- 目前進行之簡報章節 -->
+                    <div id="activeSectionLabel" class="text-xs font-semibold text-indigo-400 max-w-[160px] sm:max-w-xs truncate bg-indigo-500/10 px-2.5 py-1 rounded-md border border-indigo-500/20">
+                        <!-- 動態帶入 -->
+                    </div>
+
+                    <div class="flex items-center space-x-2">
+                        <!-- 閃爍提醒控制區塊標籤 -->
+                        <div class="flex items-center space-x-1 bg-slate-800/80 px-2 py-1 rounded-lg border border-slate-700/60 text-xs">
+                            <span class="text-slate-400 font-medium hidden xs:inline"><i class="fa-solid fa-bolt text-amber-400 mr-1"></i>閃爍警示:</span>
+                            <button id="blinkToggleBtn" title="手動切換數字閃爍提醒" class="text-xs px-2 py-0.5 rounded bg-slate-700 hover:bg-slate-600 text-slate-300 transition flex items-center space-x-1 active:scale-95 font-medium">
+                                <i id="blinkIcon" class="fa-solid fa-bolt text-slate-400"></i>
+                                <span>開/關</span>
+                            </button>
+                        </div>
+
+                        <button id="soundToggleBtn" class="text-slate-400 hover:text-white transition p-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 border border-slate-700/60 text-xs flex items-center space-x-1" title="切換警示音效 (開/關)">
+                            <i id="soundIcon" class="fa-solid fa-volume-xmark text-slate-500"></i>
+                            <span class="text-[11px] text-slate-300 hidden sm:inline">警示音效</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 超大計時數字 -->
+                <div id="timeDisplayContainer" class="w-full flex items-center justify-center my-2 sm:my-4">
+                    <div id="timeDisplay" class="font-style-serif text-[18vw] xs:text-[16vw] sm:text-8xl md:text-9xl font-extrabold tracking-tight transition-all duration-200 text-emerald-400 drop-shadow-md select-none text-center transform origin-center leading-none">
+                        20:00
+                    </div>
+                </div>
+
+                <!-- 輔助說明資訊 -->
+                <div id="timerSubtext" class="text-xs sm:text-sm font-medium text-slate-400 mt-1 sm:mt-2 text-center">
+                    總時長：20 分鐘 | 階段預警已啟用
+                </div>
+
+                <!-- 時間進度條 -->
+                <div class="w-full bg-slate-800 h-2.5 sm:h-3 rounded-full mt-4 sm:mt-8 overflow-hidden">
+                    <div id="progressBar" class="bg-emerald-500 h-full transition-all duration-500 rounded-full" style="width: 100%;"></div>
+                </div>
+            </div>
+
+            <!-- 計時器主操作按鈕群 -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+                <button id="startPauseBtn" title="快捷鍵: 空白鍵 Space" class="py-3 px-3 sm:px-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-sm sm:text-base transition flex items-center justify-center space-x-1.5 sm:space-x-2 shadow-lg shadow-emerald-600/20 active:scale-95">
+                    <i class="fa-solid fa-play text-xs sm:text-base"></i>
+                    <span>開始 (Space)</span>
+                </button>
+                <button id="resetBtn" title="快捷鍵: R 鍵" class="py-3 px-3 sm:px-4 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl font-semibold text-xs sm:text-sm transition flex items-center justify-center space-x-1.5 sm:space-x-2 active:scale-95">
+                    <i class="fa-solid fa-rotate-left text-xs sm:text-base"></i>
+                    <span>重置 (R)</span>
+                </button>
+                <button id="minusOneMinBtn" title="減少 1 分鐘" class="py-3 px-3 sm:px-4 bg-slate-800 hover:bg-rose-600/30 text-rose-300 border border-slate-700 hover:border-rose-500 rounded-xl font-semibold text-xs sm:text-sm transition flex items-center justify-center space-x-1.5 sm:space-x-2 active:scale-95">
+                    <i class="fa-solid fa-minus text-xs sm:text-base"></i>
+                    <span>- 1 分鐘</span>
+                </button>
+                <button id="plusOneMinBtn" title="增加 1 分鐘" class="py-3 px-3 sm:px-4 bg-slate-800 hover:bg-indigo-600/30 text-indigo-300 border border-slate-700 hover:border-indigo-500 rounded-xl font-semibold text-xs sm:text-sm transition flex items-center justify-center space-x-1.5 sm:space-x-2 active:scale-95">
+                    <i class="fa-solid fa-plus text-xs sm:text-base"></i>
+                    <span>+ 1 分鐘</span>
+                </button>
+            </div>
+
+            <!-- 快捷時長選單與自訂時間設定 -->
+            <div class="bg-slate-900/60 p-3 sm:p-4 rounded-xl border border-slate-800 space-y-3">
+                <div class="text-xs font-semibold text-slate-400 flex items-center justify-between">
+                    <span class="flex items-center space-x-1">
+                        <i class="fa-solid fa-clock-rotate-left text-indigo-400"></i>
+                        <span>快捷時長預設選項:</span>
+                    </span>
+                    <span class="text-slate-500 text-[11px] hidden xs:inline">點擊後自動重置計時器</span>
+                </div>
+                <div class="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                    <button onclick="setPresetTime(3)" class="py-2 bg-slate-800 hover:bg-indigo-600/30 hover:border-indigo-500 border border-slate-700/60 rounded-lg text-xs sm:text-sm font-medium transition text-slate-300">3 分</button>
+                    <button onclick="setPresetTime(5)" class="py-2 bg-slate-800 hover:bg-indigo-600/30 hover:border-indigo-500 border border-slate-700/60 rounded-lg text-xs sm:text-sm font-medium transition text-slate-300">5 分</button>
+                    <button onclick="setPresetTime(10)" class="py-2 bg-slate-800 hover:bg-indigo-600/30 hover:border-indigo-500 border border-slate-700/60 rounded-lg text-xs sm:text-sm font-medium transition text-slate-300">10 分</button>
+                    <button onclick="setPresetTime(15)" class="py-2 bg-slate-800 hover:bg-indigo-600/30 hover:border-indigo-500 border border-slate-700/60 rounded-lg text-xs sm:text-sm font-medium transition text-slate-300">15 分</button>
+                    <button onclick="setPresetTime(20)" class="py-2 bg-slate-800 hover:bg-indigo-600/30 hover:border-indigo-500 border border-slate-700/60 rounded-lg text-xs sm:text-sm font-medium transition text-slate-300">20 分</button>
+                    <button onclick="setPresetTime(30)" class="py-2 bg-slate-800 hover:bg-indigo-600/30 hover:border-indigo-500 border border-slate-700/60 rounded-lg text-xs sm:text-sm font-medium transition text-slate-300">30 分</button>
+                </div>
+
+                <!-- 自訂時間設定區塊 -->
+                <div class="pt-3 border-t border-slate-800 flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                    <span class="text-xs font-semibold text-slate-400 whitespace-nowrap flex items-center space-x-1">
+                        <i class="fa-solid fa-pen-to-square text-indigo-400"></i>
+                        <span>自訂精確時間:</span>
+                    </span>
+                    <div class="flex items-center space-x-1 flex-grow">
+                        <div class="flex items-center space-x-1 w-1/2">
+                            <span class="text-[11px] text-slate-400 whitespace-nowrap">分:</span>
+                            <input id="customMinInput" type="number" min="0" max="999" value="12" placeholder="分鐘" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white text-center focus:outline-none focus:border-indigo-500 font-mono">
+                        </div>
+                        <div class="flex items-center space-x-1 w-1/2">
+                            <span class="text-[11px] text-slate-400 whitespace-nowrap">秒:</span>
+                            <input id="customSecInput" type="number" min="0" max="59" value="0" placeholder="秒數" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white text-center focus:outline-none focus:border-indigo-500 font-mono">
+                        </div>
+                    </div>
+                    <button id="applyCustomTimeBtn" class="w-full sm:w-auto px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold transition whitespace-nowrap shadow active:scale-95 flex items-center justify-center space-x-1">
+                        <i class="fa-solid fa-check text-xs"></i>
+                        <span>套用時間</span>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 右側：簡報章節管理 & 快捷鍵說明 -->
+        <div class="w-full lg:w-80 flex-shrink-0 flex flex-col space-y-4 sm:space-y-6">
+
+            <!-- 簡報章節規劃與新增欄位區塊 -->
+            <div class="bg-slate-900/60 p-4 sm:p-5 rounded-2xl border border-slate-800 flex flex-col h-full space-y-4">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-sm sm:text-base font-bold text-white flex items-center space-x-2">
+                        <i class="fa-solid fa-list-check text-indigo-400"></i>
+                        <span>簡報流程章節規劃</span>
+                    </h2>
+                </div>
+
+                <!-- 章節列表容器 -->
+                <div id="agendaList" class="space-y-2 overflow-y-auto max-h-48 sm:max-h-56 pr-1">
+                    <!-- 動態渲染章節 -->
+                </div>
+
+                <!-- 新增章節選單 -->
+                <div class="pt-3 border-t border-slate-800/80 space-y-2 bg-slate-800/30 p-3 rounded-xl border border-slate-700/40">
+                    <label class="text-xs font-semibold text-indigo-300 flex items-center space-x-1">
+                        <i class="fa-solid fa-folder-plus"></i>
+                        <span>新增簡報章節欄位:</span>
+                    </label>
+                    <div class="flex gap-2">
+                        <input id="newSectionTitle" type="text" placeholder="章節名稱 (例: Q&A 與討論)" class="flex-grow min-w-0 bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500">
+                        <div class="flex items-center space-x-1 flex-shrink-0">
+                            <input id="newSectionMin" type="number" value="5" min="0" max="180" placeholder="分" class="w-10 bg-slate-800 border border-slate-700 rounded-lg px-1 py-1.5 text-xs text-white text-center focus:outline-none focus:border-indigo-500 font-mono">
+                            <span class="text-[10px] text-slate-500">分</span>
+                            <input id="newSectionSec" type="number" value="0" min="0" max="59" placeholder="秒" class="w-10 bg-slate-800 border border-slate-700 rounded-lg px-1 py-1.5 text-xs text-white text-center focus:outline-none focus:border-indigo-500 font-mono">
+                            <span class="text-[10px] text-slate-500">秒</span>
+                        </div>
+                    </div>
+                    <button id="addSectionBtn" class="w-full py-2 bg-indigo-600/80 hover:bg-indigo-600 text-white rounded-lg text-xs font-semibold transition flex items-center justify-center space-x-1 shadow">
+                        <i class="fa-solid fa-plus text-xs"></i>
+                        <span>加入章節流程</span>
+                    </button>
+                </div>
+
+                <!-- 講者副螢幕自訂提醒標語區塊 -->
+                <div class="pt-3 border-t border-slate-800 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <label class="text-xs font-semibold text-amber-400 flex items-center space-x-1">
+                            <i class="fa-solid fa-note-sticky"></i>
+                            <span>副螢幕講者備忘與提醒標語:</span>
+                        </label>
+                    </div>
+                    <div id="popoutNotesList" class="space-y-2 max-h-44 overflow-y-auto pr-1"></div>
+                    <div class="flex gap-1.5 pt-1">
+                        <input id="newNoteInput" type="text" placeholder="輸入新增提醒備忘內容..." class="flex-grow min-w-0 bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-amber-100 placeholder-slate-500 focus:outline-none focus:border-amber-500">
+                        <button id="addNoteBtn" title="新增提醒標語" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-xs font-semibold transition flex items-center whitespace-nowrap shadow">
+                            <i class="fa-solid fa-plus mr-1"></i>新增
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Q&A 現場提問題目管理區塊 -->
+                <div class="pt-3 border-t border-slate-800 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <label class="text-xs font-semibold text-sky-400 flex items-center space-x-1">
+                            <i class="fa-solid fa-comments"></i>
+                            <span>Q&A 現場題目列表:</span>
+                        </label>
+                    </div>
+                    <div id="qaList" class="space-y-1.5 max-h-36 overflow-y-auto pr-1"></div>
+                    <div class="flex gap-1.5 pt-1">
+                        <input id="newQaInput" type="text" placeholder="輸入新增 Q&A 提問題目..." class="flex-grow min-w-0 bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-sky-100 placeholder-slate-500 focus:outline-none focus:border-sky-500">
+                        <button id="addQaBtn" title="新增 Q&A 題目" class="px-3 py-1.5 bg-sky-600 hover:bg-sky-500 text-white rounded-lg text-xs font-semibold transition flex items-center whitespace-nowrap shadow">
+                            <i class="fa-solid fa-plus mr-1"></i>新增
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 鍵盤快捷鍵說明 -->
+            <div class="bg-slate-900/40 p-3 sm:p-4 rounded-xl border border-slate-800/80 text-xs text-slate-400 space-y-2">
+                <div class="font-bold text-slate-300 flex items-center space-x-1.5 mb-2">
+                    <i class="fa-solid fa-keyboard text-indigo-400"></i>
+                    <span>鍵盤快捷鍵指南</span>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="flex items-center justify-between bg-slate-800/50 px-2 py-1.5 rounded border border-slate-700/40 text-[11px]">
+                        <span>開始 / 暫停</span>
+                        <kbd class="px-1.5 py-0.5 bg-slate-700 text-white rounded font-mono text-[10px]">Space</kbd>
+                    </div>
+                    <div class="flex items-center justify-between bg-slate-800/50 px-2 py-1.5 rounded border border-slate-700/40 text-[11px]">
+                        <span>重置時間</span>
+                        <kbd class="px-1.5 py-0.5 bg-slate-700 text-white rounded font-mono text-[10px]">R</kbd>
+                    </div>
+                    <div class="flex items-center justify-between bg-slate-800/50 px-2 py-1.5 rounded border border-slate-700/40 text-[11px]">
+                        <span>修改分與秒</span>
+                        <kbd class="px-1.5 py-0.5 bg-slate-700 text-white rounded font-mono text-[10px]">S</kbd>
+                    </div>
+                    <div class="flex items-center justify-between bg-slate-800/50 px-2 py-1.5 rounded border border-slate-700/40 text-[11px]">
+                        <span>畫中畫置頂</span>
+                        <kbd class="px-1.5 py-0.5 bg-slate-700 text-white rounded font-mono text-[10px]">P</kbd>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Toast 訊息通知區塊 -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-indigo-600 text-white px-4 py-3 rounded-xl shadow-2xl border border-indigo-400/30 transform translate-y-20 opacity-0 transition-all duration-300 flex items-center space-x-3 pointer-events-none z-50">
+        <i id="toastIcon" class="fa-solid fa-circle-info"></i>
+        <span id="toastMessage" class="text-sm font-medium">訊息通知</span>
+    </div>
+
+    <!-- 快捷鍵 S 彈出的即時修改時間彈窗 -->
+    <div id="timeEditModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300 p-4">
+        <div class="bg-slate-900 border border-indigo-500/80 rounded-2xl max-w-xs w-full p-6 text-center space-y-4 shadow-2xl transform scale-95 transition-transform duration-300">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="text-base font-bold text-white flex items-center space-x-2">
+                    <i class="fa-solid fa-clock-rotate-left text-indigo-400"></i>
+                    <span>快速修訂倒數時間</span>
+                </h3>
+                <button id="closeTimeEditModalBtn" class="text-slate-400 hover:text-white p-1 rounded-lg">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <div class="flex items-center justify-center space-x-2 py-2">
+                <div class="text-center">
+                    <label class="text-[10px] text-slate-400 block mb-1">分鐘 (Min)</label>
+                    <input id="modalEditMin" type="number" min="0" max="999" value="10" class="w-20 bg-slate-800 border border-slate-700 text-indigo-200 font-mono text-xl font-bold rounded-xl px-2 py-2 text-center focus:outline-none focus:border-indigo-500">
+                </div>
+                <span class="text-2xl font-bold text-slate-500 mt-4">:</span>
+                <div class="text-center">
+                    <label class="text-[10px] text-slate-400 block mb-1">秒數 (Sec)</label>
+                    <input id="modalEditSec" type="number" min="0" max="59" value="0" class="w-20 bg-slate-800 border border-slate-700 text-indigo-200 font-mono text-xl font-bold rounded-xl px-2 py-2 text-center focus:outline-none focus:border-indigo-500">
+                </div>
+            </div>
+
+            <button id="confirmTimeEditBtn" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition shadow-lg shadow-indigo-600/30 active:scale-95">
+                確定儲存修訂
+            </button>
+        </div>
+    </div>
+
+    <!-- 手機同步 QR Code 對話框彈窗 -->
+    <div id="qrModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300 p-4">
+        <div class="bg-slate-900 border border-slate-700/80 rounded-2xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl transform scale-95 transition-transform duration-300">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="text-base font-bold text-white flex items-center space-x-2">
+                    <i class="fa-solid fa-mobile-screen-button text-emerald-400"></i>
+                    <span>行動裝置同步副螢幕</span>
+                </h3>
+                <button id="closeQrModalBtn" class="text-slate-400 hover:text-white p-1 rounded-lg">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <p class="text-xs text-slate-300">用手機或平板相機掃描下方 QR Code，即可在副螢幕上實時觀看響應式大字計時與講者備忘：</p>
+
+            <div class="flex justify-center p-3 bg-white rounded-xl shadow-inner w-fit mx-auto border border-slate-200">
+                <div id="qrcodeContainer"></div>
+            </div>
+
+            <div class="space-y-2 text-left">
+                <label class="text-[11px] font-semibold text-slate-400">直連網址連結:</label>
+                <div class="flex items-center space-x-2">
+                    <input id="syncUrlInput" type="text" readonly class="w-full bg-slate-800 border border-slate-700 text-indigo-300 text-xs rounded-lg px-2.5 py-2 font-mono truncate focus:outline-none">
+                    <button id="copySyncUrlBtn" class="px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg transition whitespace-nowrap active:scale-95">
+                        <i class="fa-solid fa-copy mr-1"></i>複製
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * 簡報演講大師計時器 (Presentation Master Timer)
+         */
+
+        // 檢查當前 URL 是否帶有 view=display 參數（獨立副螢幕頁面模式）
+        const urlParams = new URLSearchParams(window.location.search);
+        const isStandaloneViewer = urlParams.get('view') === 'display';
+
+        if (isStandaloneViewer) {
+            // 如果是獨立副螢幕網頁模式，直接把頁面替換為副螢幕視覺畫面
+            document.addEventListener('DOMContentLoaded', () => {
+                setupStandaloneViewerPage();
+            });
+        }
+
+        const fontStyleMap = {
+            'sans': { cssClass: 'font-style-sans', canvasFont: 'bold {size}px "Noto Sans TC", sans-serif', name: '預設無襯線體' },
+            'digital': { cssClass: 'font-style-digital', canvasFont: 'bold {size}px Orbitron, "Share Tech Mono", monospace', name: '數位電子管風格' },
+            'geometric': { cssClass: 'font-style-geometric', canvasFont: '900 {size}px Montserrat, Outfit, sans-serif', name: '幾何無襯線風格' },
+            'rounded': { cssClass: 'font-style-rounded', canvasFont: 'bold {size}px Fredoka, Quicksand, sans-serif', name: '圓體風格' },
+            'serif': { cssClass: 'font-style-serif', canvasFont: 'bold {size}px "Playfair Display", Cinzel, serif', name: '古典襯線風格' },
+            'flip': { cssClass: 'font-style-flip', canvasFont: 'bold {size}px "Bebas Neue", Teko, Impact, sans-serif', name: '傳統翻頁鐘風格' },
+            'typewriter': { cssClass: 'font-style-typewriter', canvasFont: 'bold {size}px "Courier Prime", "Special Elite", monospace', name: '機械打字機風格' },
+            'pixel': { cssClass: 'font-style-pixel', canvasFont: 'bold {size}px "Press Start 2P", Silkscreen, monospace', name: '經典像素風格' },
+            'heavy': { cssClass: 'font-style-heavy', canvasFont: 'bold {size}px "Black Ops One", "Rubik Mono One", cursive', name: '新潮液態/極粗風格' },
+            'ultralight': { cssClass: 'font-style-ultralight', canvasFont: '200 {size}px Inter, Roboto, sans-serif', name: '輕量極細風格' },
+            'handwriting': { cssClass: 'font-style-handwriting', canvasFont: 'bold {size}px Caveat, "Patrick Hand", cursive', name: '人手書寫風格' },
+            'jelly': { cssClass: 'font-style-jelly', canvasFont: '900 {size}px "Titan One", Sniglet, cursive', name: '3D 果凍 / 泡泡糖' },
+            'metallic': { cssClass: 'font-style-metallic', canvasFont: '900 {size}px "Chakra Petch", Michroma, sans-serif', name: '金屬機械風' },
+            'fluffy': { cssClass: 'font-style-fluffy', canvasFont: 'bold {size}px "Mochiy Pop One", cursive', name: '毛茸茸 / 絨毛風' },
+            'botanical': { cssClass: 'font-style-botanical', canvasFont: 'bold {size}px "Cinzel Decorative", "Playfair Display", serif', name: '植物花草風' },
+            'literary': { cssClass: 'font-style-literary', canvasFont: 'bold {size}px "Dancing Script", Caveat, cursive', name: '文青手寫風' },
+            'chalkboard': { cssClass: 'font-style-chalkboard', canvasFont: 'bold {size}px "Cabin Sketch", "Fredericka the Great", cursive', name: '粉筆手繪風' },
+            'vintage': { cssClass: 'font-style-vintage', canvasFont: 'bold {size}px Pacifico, Monoton, cursive', name: '復古美式招牌' },
+            'neon': { cssClass: 'font-style-neon', canvasFont: 'bold {size}px "Tilt Neon", "Vampiro One", cursive', name: '霓虹燈管風' }
+        };
+
+        const state = {
+            mode: 'countdown',
+            status: 'stopped',
+            theme: 'dark',
+            fontStyleKey: 'serif',
+            totalSeconds: 20 * 60,
+            remainingSeconds: 20 * 60,
+            stopwatchSeconds: 0,
+            intervalId: null,
+            soundEnabled: false,
+            isBlinking: false,
+            zoomScale: 1.0,
+            popoutZoomScale: 1.0,
+            logoScale: 1.0,
+            logoPosition: 'top-right',
+            pipColor: '#22c55e',
+            pipMaterial: 'transparent',
+            pipOffsetY: '0%',
+            popoutColor: 'text-emerald-400',
+            popoutOffsetY: '0%',
+            popoutSectionColor: 'text-indigo-400',
+            popoutSectionSize: 'text-2xl',
+            popoutSectionFont: 'sans',
+            popoutNoteColor: 'bg-amber-500/20 border-amber-500/70 text-amber-200',
+            popoutNoteSize: 'text-2xl',
+            popoutNoteFont: 'sans',
+            popoutQaColor: 'text-sky-300 bg-sky-500/30 border-sky-400/70',
+            popoutQaSize: 'text-4xl',
+            popoutQaFont: 'sans',
+            bgOpacity: 0.9,
+            customBgUrl: null,
+            customPopoutBgUrl: null,
+            customLogoUrl: null,
+            customLogoImg: null,
+            mainTopicTitle: '年度研討會簡報發表',
+            popoutNotes: [
+                { text: '請講者注意時間與語速，保持沉穩', show: true },
+                { text: '重點段落加重語氣，與台下觀眾互動', show: true },
+                { text: '預留 5 分鐘進行 QA 提問環節', show: true }
+            ],
+            qaItems: [
+                { id: 1, text: '請說明產品與市場現有競品的優勢差異？' },
+                { id: 2, text: '未來的推廣預算與財務規劃為何？' }
+            ],
+            activeQaId: null,
+            popoutWindow: null,
+            sections: [
+                { id: 1, title: '開場與願景簡介', minutes: 3, seconds: 0 },
+                { id: 2, title: '核心產品發表與實測', minutes: 12, seconds: 30 },
+                { id: 3, title: '現場 Q & A 互動問答', minutes: 5, seconds: 0 }
+            ],
+            currentSectionIndex: 0
+        };
+
+        const appBody = document.getElementById('appBody');
+        const timeDisplay = document.getElementById('timeDisplay');
+        const progressBar = document.getElementById('progressBar');
+        const statusBadge = document.getElementById('statusBadge');
+        const activeSectionLabel = document.getElementById('activeSectionLabel');
+        const timerSubtext = document.getElementById('timerSubtext');
+        const currentLocalTime = document.getElementById('currentLocalTime');
+        const startPauseBtn = document.getElementById('startPauseBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const minusOneMinBtn = document.getElementById('minusOneMinBtn');
+        const plusOneMinBtn = document.getElementById('plusOneMinBtn');
+        const modeCountdownBtn = document.getElementById('modeCountdownBtn');
+        const modeStopwatchBtn = document.getElementById('modeStopwatchBtn');
+        const fontStyleSelect = document.getElementById('fontStyleSelect');
+        const bgOpacityInput = document.getElementById('bgOpacityInput');
+        const bgOpacityLabel = document.getElementById('bgOpacityLabel');
+        const bgFileInput = document.getElementById('bgFileInput');
+        const clearBgBtn = document.getElementById('clearBgBtn');
+        const popoutBgFileInput = document.getElementById('popoutBgFileInput');
+        const clearPopoutBgBtn = document.getElementById('clearPopoutBgBtn');
+        const logoFileInput = document.getElementById('logoFileInput');
+        const clearLogoBtn = document.getElementById('clearLogoBtn');
+        const logoScaleContainer = document.getElementById('logoScaleContainer');
+        const logoScaleInput = document.getElementById('logoScaleInput');
+        const logoScaleLabel = document.getElementById('logoScaleLabel');
+        const logoZoomInBtn = document.getElementById('logoZoomInBtn');
+        const logoZoomOutBtn = document.getElementById('logoZoomOutBtn');
+        const logoPositionSelect = document.getElementById('logoPositionSelect');
+        const displayCard = document.getElementById('displayCard');
+        const themeDarkBtn = document.getElementById('themeDarkBtn');
+        const themeLightBtn = document.getElementById('themeLightBtn');
+        const themeWhiteBtn = document.getElementById('themeWhiteBtn');
+        const soundToggleBtn = document.getElementById('soundToggleBtn');
+        const soundIcon = document.getElementById('soundIcon');
+        const zoomInBtn = document.getElementById('zoomInBtn');
+        const zoomOutBtn = document.getElementById('zoomOutBtn');
+        const zoomResetBtn = document.getElementById('zoomResetBtn');
+        const zoomPercentLabel = document.getElementById('zoomPercentLabel');
+        const popoutZoomInBtn = document.getElementById('popoutZoomInBtn');
+        const popoutZoomOutBtn = document.getElementById('popoutZoomOutBtn');
+        const popoutZoomResetBtn = document.getElementById('popoutZoomResetBtn');
+        const popoutZoomPercentLabel = document.getElementById('popoutZoomPercentLabel');
+        const pipColorSelect = document.getElementById('pipColorSelect');
+        const pipMaterialSelect = document.getElementById('pipMaterialSelect');
+        const pipAlignSelect = document.getElementById('pipAlignSelect');
+        const popoutColorSelect = document.getElementById('popoutColorSelect');
+        const popoutAlignSelect = document.getElementById('popoutAlignSelect');
+        const popoutSectionColorSelect = document.getElementById('popoutSectionColorSelect');
+        const popoutSectionSizeSelect = document.getElementById('popoutSectionSizeSelect');
+        const popoutSectionFontSelect = document.getElementById('popoutSectionFontSelect');
+        const popoutNoteColorSelect = document.getElementById('popoutNoteColorSelect');
+        const popoutNoteSizeSelect = document.getElementById('popoutNoteSizeSelect');
+        const popoutNoteFontSelect = document.getElementById('popoutNoteFontSelect');
+        const popoutQaColorSelect = document.getElementById('popoutQaColorSelect');
+        const popoutQaSizeSelect = document.getElementById('popoutQaSizeSelect');
+        const popoutQaFontSelect = document.getElementById('popoutQaFontSelect');
+
+        const pipCanvas = document.getElementById('pipCanvas');
+        const pipVideo = document.getElementById('pipVideo');
+        const pipCtx = pipCanvas ? pipCanvas.getContext('2d') : null;
+
+        const toggleSettingsPanelBtn = document.getElementById('toggleSettingsPanelBtn');
+        const settingsPanelContent = document.getElementById('settingsPanelContent');
+        const settingsToggleText = document.getElementById('settingsToggleText');
+        const settingsToggleIcon = document.getElementById('settingsToggleIcon');
+
+        toggleSettingsPanelBtn?.addEventListener('click', () => {
+            const isHidden = settingsPanelContent.classList.contains('hidden');
+            if (isHidden) {
+                settingsPanelContent.classList.remove('hidden');
+                if (settingsToggleText) settingsToggleText.textContent = '收合設定';
+                if (settingsToggleIcon) settingsToggleIcon.className = 'fa-solid fa-chevron-up transition-transform duration-300';
+            } else {
+                settingsPanelContent.classList.add('hidden');
+                if (settingsToggleText) settingsToggleText.textContent = '展開設定';
+                if (settingsToggleIcon) settingsToggleIcon.className = 'fa-solid fa-chevron-down transition-transform duration-300';
+            }
+        });
+
+        function formatTime(seconds) {
+            const isNegative = seconds < 0;
+            const absSeconds = Math.abs(seconds);
+            const mins = Math.floor(absSeconds / 60);
+            const secs = absSeconds % 60;
+            const formatted = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+            return isNegative ? `-${formatted}` : formatted;
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            if (!toast || !toastMessage) return;
+            toastMessage.textContent = message;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 2500);
+        }
+
+        function playBeep(freq = 800, duration = 0.3) {
+            if (!state.soundEnabled) return;
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (!AudioCtx) return;
+                const ctx = new AudioCtx();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0.15, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + duration);
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function toggleTimer() {
+            if (state.status === 'running') pauseTimer();
+            else startTimer();
+        }
+
+        function startTimer() {
+            if (state.status === 'running') return;
+            state.status = 'running';
+            clearInterval(state.intervalId);
+            
+            state.intervalId = setInterval(() => {
+                if (state.mode === 'countdown') {
+                    if (state.remainingSeconds > 0) {
+                        state.remainingSeconds--;
+                        if (state.remainingSeconds === 0) {
+                            pauseTimer();
+                            playBeep(1200, 0.6);
+                            showToast('倒數計時結束！');
+                        }
+                    }
+                } else {
+                    state.stopwatchSeconds++;
+                }
+                renderTimer();
+            }, 1000);
+
+            renderTimer();
+        }
+
+        function pauseTimer() {
+            state.status = 'paused';
+            clearInterval(state.intervalId);
+            renderTimer();
+        }
+
+        function resetTimer() {
+            pauseTimer();
+            state.status = 'stopped';
+            state.remainingSeconds = state.totalSeconds;
+            state.stopwatchSeconds = 0;
+            renderTimer();
+            showToast('已重置時間');
+        }
+
+        function setPresetTime(mins) {
+            pauseTimer();
+            state.mode = 'countdown';
+            state.totalSeconds = mins * 60;
+            state.remainingSeconds = mins * 60;
+            state.status = 'stopped';
+            renderTimer();
+            renderAgendaList();
+            showToast(`設定為 ${mins} 分鐘`);
+        }
+
+        function renderAgendaList() {
+            const agendaList = document.getElementById('agendaList');
+            if (!agendaList) return;
+            agendaList.innerHTML = '';
+
+            if (state.sections.length === 0) {
+                const div = document.createElement('div');
+                div.className = 'p-3 rounded-xl bg-slate-800/60 border border-slate-700/60 text-xs space-y-2';
+                div.innerHTML = `
+                    <div class="flex items-center space-x-2 text-indigo-300 font-semibold">
+                        <i class="fa-solid fa-microphone"></i>
+                        <span>研討會標題模式 (無設定分段章節)</span>
+                    </div>
+                    <div>
+                        <label class="text-[11px] text-slate-400">研討會標題名稱:</label>
+                        <input id="mainTopicInput" type="text" value="${state.mainTopicTitle}" placeholder="請輸入研討會標題" class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white focus:outline-none focus:border-indigo-500">
+                    </div>
+                `;
+                agendaList.appendChild(div);
+
+                const mainTopicInput = document.getElementById('mainTopicInput');
+                mainTopicInput?.addEventListener('input', (e) => {
+                    state.mainTopicTitle = e.target.value.trim() || '研討會標題';
+                    if (activeSectionLabel) {
+                        activeSectionLabel.textContent = `研討會標題: ${state.mainTopicTitle}`;
+                    }
+                    updatePopoutWindow();
+                });
+
+                if (activeSectionLabel) {
+                    activeSectionLabel.textContent = `研討會標題: ${state.mainTopicTitle}`;
+                }
+                return;
+            }
+
+            state.sections.forEach((sec, idx) => {
+                const isCurrent = idx === state.currentSectionIndex;
+                const secSeconds = sec.seconds || 0;
+                const timeText = secSeconds > 0 ? `${sec.minutes}m ${secSeconds}s` : `${sec.minutes}m`;
+                
+                const div = document.createElement('div');
+                div.className = `p-2.5 rounded-xl border transition flex items-center justify-between text-xs ${
+                    isCurrent
+                        ? 'bg-indigo-600/20 border-indigo-500/50 text-indigo-200 font-semibold'
+                        : 'bg-slate-800/40 border-slate-700/50 text-slate-300 hover:bg-slate-800'
+                }`;
+
+                div.innerHTML = `
+                    <div class="flex items-center space-x-2 truncate flex-grow cursor-pointer min-w-0 mr-1" onclick="selectSection(${idx})">
+                        <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${
+                            isCurrent ? 'bg-indigo-500 text-white' : 'bg-slate-700 text-slate-400'
+                        }">${idx + 1}</span>
+                        <span id="sectionText_${sec.id}" onclick="event.stopPropagation(); startEditingSection(${sec.id})" class="truncate font-medium cursor-pointer hover:text-indigo-300 transition" title="點擊編輯章節名稱">${sec.title}</span>
+                    </div>
+                    <div class="flex items-center space-x-1 flex-shrink-0">
+                        <span id="sectionMinText_${sec.id}" onclick="event.stopPropagation(); startEditingSectionMinutes(${sec.id})" class="font-mono text-indigo-300 hover:text-indigo-100 bg-indigo-950/40 hover:bg-indigo-900/60 border border-indigo-700/40 rounded px-1.5 py-0.5 mr-1 cursor-pointer transition" title="點擊修改時間">${timeText}</span>
+                        <button onclick="event.stopPropagation(); moveSection(${idx}, -1)" title="向上移動" class="text-slate-400 hover:text-indigo-400 p-1 ${idx === 0 ? 'opacity-30 cursor-not-allowed' : ''}">
+                            <i class="fa-solid fa-chevron-up text-[10px]"></i>
+                        </button>
+                        <button onclick="event.stopPropagation(); moveSection(${idx}, 1)" title="向下移動" class="text-slate-400 hover:text-indigo-400 p-1 ${idx === state.sections.length - 1 ? 'opacity-30 cursor-not-allowed' : ''}">
+                            <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                        </button>
+                        <button onclick="event.stopPropagation(); startEditingSection(${sec.id})" title="修改章節標題" class="text-slate-400 hover:text-indigo-400 p-1">
+                            <i class="fa-solid fa-pen text-[11px]"></i>
+                        </button>
+                        <button onclick="event.stopPropagation(); deleteSection(${sec.id})" title="刪除章節" class="text-slate-400 hover:text-rose-400 p-1">
+                            <i class="fa-solid fa-trash text-[11px]"></i>
+                        </button>
+                    </div>
+                `;
+                agendaList.appendChild(div);
+            });
+
+            if (activeSectionLabel && state.sections[state.currentSectionIndex]) {
+                activeSectionLabel.textContent = `章節: ${state.sections[state.currentSectionIndex].title}`;
+            }
+        }
+
+        function startEditingSection(id) {
+            const sec = state.sections.find(s => s.id === id);
+            if (!sec) return;
+            const textSpan = document.getElementById(`sectionText_${id}`);
+            if (!textSpan) return;
+
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = sec.title;
+            input.className = 'w-full bg-slate-900 border border-indigo-500 text-indigo-100 text-xs rounded px-2 py-0.5 focus:outline-none focus:ring-1 focus:ring-indigo-400';
+
+            const finishEditing = () => {
+                const newTitle = input.value.trim();
+                if (newTitle && newTitle !== sec.title) {
+                    sec.title = newTitle;
+                    renderAgendaList();
+                    renderTimer();
+                    updatePopoutWindow();
+                    showToast('已更新章節名稱');
+                } else {
+                    renderAgendaList();
+                }
+            };
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') finishEditing();
+                else if (e.key === 'Escape') renderAgendaList();
+            });
+            input.addEventListener('blur', finishEditing);
+            textSpan.replaceWith(input);
+            input.focus();
+            input.select();
+        }
+
+        function startEditingSectionMinutes(id) {
+            const sec = state.sections.find(s => s.id === id);
+            if (!sec) return;
+            const minSpan = document.getElementById(`sectionMinText_${id}`);
+            if (!minSpan) return;
+
+            const container = document.createElement('div');
+            container.className = 'flex items-center space-x-1';
+            const minInput = document.createElement('input');
+            minInput.type = 'number';
+            minInput.min = '0';
+            minInput.max = '999';
+            minInput.value = sec.minutes;
+            minInput.className = 'w-9 bg-slate-900 border border-indigo-400 text-indigo-100 font-mono text-xs text-center rounded px-0.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-indigo-300';
+
+            const secInput = document.createElement('input');
+            secInput.type = 'number';
+            secInput.min = '0';
+            secInput.max = '59';
+            secInput.value = sec.seconds || 0;
+            secInput.className = 'w-9 bg-slate-900 border border-indigo-400 text-indigo-100 font-mono text-xs text-center rounded px-0.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-indigo-300';
+
+            container.appendChild(minInput);
+            container.appendChild(document.createTextNode('m'));
+            container.appendChild(secInput);
+            container.appendChild(document.createTextNode('s'));
+
+            let isFinished = false;
+            const finishEditing = () => {
+                if (isFinished) return;
+                isFinished = true;
+                const newMins = parseInt(minInput.value, 10) || 0;
+                const newSecs = parseInt(secInput.value, 10) || 0;
+                const totalSec = newMins * 60 + newSecs;
+
+                if (totalSec > 0) {
+                    sec.minutes = newMins;
+                    sec.seconds = newSecs;
+                    if (state.sections[state.currentSectionIndex]?.id === id && state.mode === 'countdown') {
+                        state.totalSeconds = totalSec;
+                        state.remainingSeconds = totalSec;
+                    }
+                    renderAgendaList();
+                    renderTimer();
+                    updatePopoutWindow();
+                    showToast(`章節時間修訂為 ${newMins} 分 ${newSecs} 秒`);
+                } else {
+                    renderAgendaList();
+                }
+            };
+
+            const handleKeyDown = (e) => {
+                if (e.key === 'Enter') finishEditing();
+                else if (e.key === 'Escape') { isFinished = true; renderAgendaList(); }
+            };
+
+            minInput.addEventListener('keydown', handleKeyDown);
+            secInput.addEventListener('keydown', handleKeyDown);
+
+            setTimeout(() => {
+                window.addEventListener('click', function onClickOutside(e) {
+                    if (!container.contains(e.target)) {
+                        window.removeEventListener('click', onClickOutside);
+                        finishEditing();
+                    }
+                });
+            }, 100);
+
+            minSpan.replaceWith(container);
+            minInput.focus();
+            minInput.select();
+        }
+
+        function moveSection(index, direction) {
+            const targetIndex = index + direction;
+            if (targetIndex < 0 || targetIndex >= state.sections.length) return;
+            const temp = state.sections[index];
+            state.sections[index] = state.sections[targetIndex];
+            state.sections[targetIndex] = temp;
+
+            if (state.currentSectionIndex === index) state.currentSectionIndex = targetIndex;
+            else if (state.currentSectionIndex === targetIndex) state.currentSectionIndex = index;
+
+            renderAgendaList();
+            updatePopoutWindow();
+            showToast('已調整章節順序');
+        }
+
+        function selectSection(index) {
+            if (index < 0 || index >= state.sections.length) return;
+            state.currentSectionIndex = index;
+            const sec = state.sections[index];
+            const secTotal = sec.minutes * 60 + (sec.seconds || 0);
+            if (state.mode === 'countdown') {
+                state.totalSeconds = secTotal;
+                state.remainingSeconds = secTotal;
+            }
+            renderAgendaList();
+            renderTimer();
+            showToast(`切換至章節：${sec.title}`);
+        }
+
+        function deleteSection(id) {
+            state.sections = state.sections.filter(s => s.id !== id);
+            if (state.sections.length > 0) {
+                if (state.currentSectionIndex >= state.sections.length) {
+                    state.currentSectionIndex = state.sections.length - 1;
+                }
+            } else {
+                state.currentSectionIndex = 0;
+            }
+            renderAgendaList();
+            renderTimer();
+            updatePopoutWindow();
+            showToast(state.sections.length === 0 ? '已切換為研討會標題模式' : '已移除該章節');
+        }
+
+        function renderPopoutNotesList() {
+            const popoutNotesList = document.getElementById('popoutNotesList');
+            if (!popoutNotesList) return;
+            popoutNotesList.innerHTML = '';
+
+            if (state.popoutNotes.length === 0) {
+                popoutNotesList.innerHTML = `<div class="text-[11px] text-slate-500 italic py-1 text-center">尚未新增任何備忘標語</div>`;
+                return;
+            }
+
+            state.popoutNotes.forEach((note, idx) => {
+                const div = document.createElement('div');
+                div.className = "flex items-center space-x-1.5 p-1.5 bg-slate-800/40 border border-slate-700/40 rounded-lg text-xs transition hover:bg-slate-800/80";
+
+                div.innerHTML = `
+                    <input type="checkbox" ${note.show ? 'checked' : ''} onchange="toggleNoteShow(${idx}, this.checked)" class="w-4 h-4 rounded text-amber-500 bg-slate-800 border-slate-700 focus:ring-amber-500 cursor-pointer flex-shrink-0">
+                    <input type="text" value="${note.text.replace(/"/g, '&quot;')}" oninput="updateNoteText(${idx}, this.value)" placeholder="備忘內容..." class="flex-grow min-w-0 bg-slate-900/80 border border-slate-700 rounded px-2 py-1 text-xs text-amber-200 placeholder-slate-500 focus:outline-none focus:border-amber-500">
+                    <button onclick="moveNoteItem(${idx}, -1)" title="向上移動" class="text-slate-400 hover:text-amber-400 p-0.5 ${idx === 0 ? 'opacity-30 cursor-not-allowed' : ''}">
+                        <i class="fa-solid fa-chevron-up text-[9px]"></i>
+                    </button>
+                    <button onclick="moveNoteItem(${idx}, 1)" title="向下移動" class="text-slate-400 hover:text-amber-400 p-0.5 ${idx === state.popoutNotes.length - 1 ? 'opacity-30 cursor-not-allowed' : ''}">
+                        <i class="fa-solid fa-chevron-down text-[9px]"></i>
+                    </button>
+                    <button onclick="deleteNoteItem(${idx})" title="刪除標語" class="text-slate-400 hover:text-rose-400 p-0.5">
+                        <i class="fa-solid fa-xmark text-[11px]"></i>
+                    </button>
+                `;
+                popoutNotesList.appendChild(div);
+            });
+        }
+
+        function toggleNoteShow(index, isChecked) {
+            if (state.popoutNotes[index]) {
+                state.popoutNotes[index].show = isChecked;
+                updatePopoutWindow();
+            }
+        }
+
+        function updateNoteText(index, val) {
+            if (state.popoutNotes[index]) {
+                state.popoutNotes[index].text = val;
+                updatePopoutWindow();
+            }
+        }
+
+        function moveNoteItem(index, direction) {
+            const targetIndex = index + direction;
+            if (targetIndex < 0 || targetIndex >= state.popoutNotes.length) return;
+            const temp = state.popoutNotes[index];
+            state.popoutNotes[index] = state.popoutNotes[targetIndex];
+            state.popoutNotes[targetIndex] = temp;
+            renderPopoutNotesList();
+            updatePopoutWindow();
+            showToast('已調整備忘標語順序');
+        }
+
+        function deleteNoteItem(index) {
+            state.popoutNotes.splice(index, 1);
+            renderPopoutNotesList();
+            updatePopoutWindow();
+            showToast('已刪除備忘標語');
+        }
+
+        const newNoteInput = document.getElementById('newNoteInput');
+        const addNoteBtn = document.getElementById('addNoteBtn');
+
+        addNoteBtn?.addEventListener('click', () => {
+            const text = newNoteInput?.value.trim();
+            if (!text) return;
+            state.popoutNotes.push({ text, show: true });
+            if (newNoteInput) newNoteInput.value = '';
+            renderPopoutNotesList();
+            updatePopoutWindow();
+            showToast('已新增備忘標語');
+        });
+
+        newNoteInput?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addNoteBtn?.click();
+            }
+        });
+
+        function renderQaList() {
+            const qaList = document.getElementById('qaList');
+            if (!qaList) return;
+            qaList.innerHTML = '';
+            if (state.qaItems.length === 0) {
+                qaList.innerHTML = `<div class="text-[11px] text-slate-500 italic py-1 text-center">尚未新增任何 Q&A 提問題目</div>`;
+                return;
+            }
+
+            state.qaItems.forEach((item, idx) => {
+                const isActive = item.id === state.activeQaId;
+                const div = document.createElement('div');
+                div.className = `p-2 rounded-lg border transition flex items-center justify-between text-xs ${
+                    isActive
+                        ? 'bg-sky-500/20 border-sky-400/60 text-sky-200 font-semibold shadow-sm'
+                        : 'bg-slate-800/40 border-slate-700/40 text-slate-300 hover:bg-slate-800'
+                }`;
+
+                div.innerHTML = `
+                    <div class="flex items-center space-x-1.5 truncate flex-grow cursor-pointer min-w-0 mr-1" onclick="toggleActiveQa(${item.id})">
+                        <span class="w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold flex-shrink-0 ${
+                            isActive ? 'bg-sky-500 text-white' : 'bg-slate-700 text-slate-400'
+                        }">Q${idx + 1}</span>
+                        <span id="qaText_${item.id}" onclick="event.stopPropagation(); startEditingQa(${item.id})" class="truncate text-[11px] hover:text-sky-300 transition" title="點擊編輯題目內容">${item.text}</span>
+                    </div>
+                    <div class="flex items-center space-x-1 flex-shrink-0">
+                        <button onclick="event.stopPropagation(); moveQaItem(${idx}, -1)" title="向上移動" class="text-slate-400 hover:text-sky-400 p-0.5 ${idx === 0 ? 'opacity-30 cursor-not-allowed' : ''}">
+                            <i class="fa-solid fa-chevron-up text-[9px]"></i>
+                        </button>
+                        <button onclick="event.stopPropagation(); moveQaItem(${idx}, 1)" title="向下移動" class="text-slate-400 hover:text-sky-400 p-0.5 ${idx === state.qaItems.length - 1 ? 'opacity-30 cursor-not-allowed' : ''}">
+                            <i class="fa-solid fa-chevron-down text-[9px]"></i>
+                        </button>
+                        <button onclick="event.stopPropagation(); startEditingQa(${item.id})" title="修改題目" class="text-slate-400 hover:text-sky-400 p-0.5">
+                            <i class="fa-solid fa-pen text-[10px]"></i>
+                        </button>
+                        <button onclick="event.stopPropagation(); deleteQaItem(${item.id})" title="刪除題目" class="text-slate-400 hover:text-rose-400 p-0.5">
+                            <i class="fa-solid fa-xmark text-[11px]"></i>
+                        </button>
+                    </div>
+                `;
+                qaList.appendChild(div);
+            });
+        }
+
+        function startEditingQa(id) {
+            const item = state.qaItems.find(q => q.id === id);
+            if (!item) return;
+            const textSpan = document.getElementById(`qaText_${id}`);
+            if (!textSpan) return;
+
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = item.text;
+            input.className = 'w-full bg-slate-900 border border-sky-400 text-sky-100 text-xs rounded px-2 py-0.5 focus:outline-none focus:ring-1 focus:ring-sky-400';
+
+            const finishEditing = () => {
+                const newText = input.value.trim();
+                if (newText && newText !== item.text) {
+                    item.text = newText;
+                    renderTimer();
+                    updatePopoutWindow();
+                    showToast('已更新 Q&A 題目內容');
+                }
+                renderQaList();
+            };
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') finishEditing();
+                else if (e.key === 'Escape') renderQaList();
+            });
+            input.addEventListener('blur', finishEditing);
+            textSpan.replaceWith(input);
+            input.focus();
+            input.select();
+        }
+
+        function moveQaItem(index, direction) {
+            const targetIndex = index + direction;
+            if (targetIndex < 0 || targetIndex >= state.qaItems.length) return;
+            const temp = state.qaItems[index];
+            state.qaItems[index] = state.qaItems[targetIndex];
+            state.qaItems[targetIndex] = temp;
+            renderQaList();
+            renderTimer();
+            updatePopoutWindow();
+            showToast('已調整 Q&A 題目順序');
+        }
+
+        function toggleActiveQa(id) {
+            if (state.activeQaId === id) {
+                state.activeQaId = null;
+                showToast('已取消選中 Q&A 題目');
+            } else {
+                state.activeQaId = id;
+                const index = state.qaItems.findIndex(q => q.id === id);
+                const item = state.qaItems[index];
+                showToast(`切換 Q${index + 1} 題目: ${item ? item.text : ''}`);
+            }
+            renderQaList();
+            renderTimer();
+            updatePopoutWindow();
+        }
+
+        function deleteQaItem(id) {
+            state.qaItems = state.qaItems.filter(q => q.id !== id);
+            if (state.activeQaId === id) state.activeQaId = null;
+            renderQaList();
+            renderTimer();
+            updatePopoutWindow();
+            showToast('已刪除該 Q&A 題目');
+        }
+
+        const newQaInput = document.getElementById('newQaInput');
+        const addQaBtn = document.getElementById('addQaBtn');
+
+        addQaBtn?.addEventListener('click', () => {
+            const text = newQaInput?.value.trim();
+            if (!text) return;
+            const newItem = { id: Date.now(), text };
+            state.qaItems.push(newItem);
+            state.activeQaId = newItem.id;
+            if (newQaInput) newQaInput.value = '';
+            renderQaList();
+            renderTimer();
+            updatePopoutWindow();
+            showToast('已新增 Q&A 題目');
+        });
+
+        newQaInput?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addQaBtn?.click();
+            }
+        });
+
+        function toggleSound() {
+            state.soundEnabled = !state.soundEnabled;
+            if (soundIcon) {
+                if (state.soundEnabled) {
+                    soundIcon.className = "fa-solid fa-volume-high text-indigo-400";
+                    showToast('已開啟警示音效');
+                } else {
+                    soundIcon.className = "fa-solid fa-volume-xmark text-slate-500";
+                    showToast('已關閉聲音 (靜音)');
+                }
+            }
+        }
+
+        function updatePipCanvas() {
+            if (!pipCtx || !pipCanvas) return;
+            const width = pipCanvas.width;
+            const height = pipCanvas.height;
+
+            pipCtx.clearRect(0, 0, width, height);
+
+            const mat = state.pipMaterial || 'transparent';
+            if (mat !== 'transparent') {
+                pipCtx.save();
+                const margin = 20;
+                const rx = margin;
+                const ry = margin;
+                const rw = width - margin * 2;
+                const rh = height - margin * 2;
+                const radius = 36;
+
+                pipCtx.beginPath();
+                pipCtx.moveTo(rx + radius, ry);
+                pipCtx.lineTo(rx + rw - radius, ry);
+                pipCtx.quadraticCurveTo(rx + rw, ry, rx + rw, ry + radius);
+                pipCtx.lineTo(rx + rw, ry + rh - radius);
+                pipCtx.quadraticCurveTo(rx + rw, ry + rh, rx + rw - radius, ry + rh);
+                pipCtx.lineTo(rx + radius, ry + rh);
+                pipCtx.quadraticCurveTo(rx, ry + rh, rx, ry + rh - radius);
+                pipCtx.lineTo(rx, ry + radius);
+                pipCtx.quadraticCurveTo(rx, ry, rx + radius, ry);
+                pipCtx.closePath();
+
+                if (mat === 'frosted-glass') {
+                    const grad = pipCtx.createLinearGradient(rx, ry, rx + rw, ry + rh);
+                    grad.addColorStop(0, 'rgba(255, 255, 255, 0.22)');
+                    grad.addColorStop(0.5, 'rgba(255, 255, 255, 0.08)');
+                    grad.addColorStop(1, 'rgba(15, 23, 42, 0.75)');
+                    pipCtx.fillStyle = grad;
+                    pipCtx.fill();
+                    pipCtx.lineWidth = 3;
+                    const borderGrad = pipCtx.createLinearGradient(rx, ry, rx + rw, ry + rh);
+                    borderGrad.addColorStop(0, 'rgba(255, 255, 255, 0.45)');
+                    borderGrad.addColorStop(1, 'rgba(255, 255, 255, 0.1)');
+                    pipCtx.strokeStyle = borderGrad;
+                    pipCtx.stroke();
+                } else if (mat === 'acrylic') {
+                    const grad = pipCtx.createLinearGradient(rx, ry, rx, ry + rh);
+                    grad.addColorStop(0, 'rgba(16, 24, 39, 0.85)');
+                    grad.addColorStop(0.5, 'rgba(30, 41, 59, 0.75)');
+                    grad.addColorStop(1, 'rgba(14, 116, 144, 0.4)');
+                    pipCtx.fillStyle = grad;
+                    pipCtx.fill();
+                    pipCtx.lineWidth = 4;
+                    const borderGrad = pipCtx.createLinearGradient(rx, ry, rx + rw, ry);
+                    borderGrad.addColorStop(0, 'rgba(56, 189, 248, 0.6)');
+                    borderGrad.addColorStop(1, 'rgba(129, 140, 248, 0.3)');
+                    pipCtx.strokeStyle = borderGrad;
+                    pipCtx.stroke();
+                } else if (mat === 'resin') {
+                    const grad = pipCtx.createRadialGradient(width / 2, height / 2, 50, width / 2, height / 2, width / 1.5);
+                    grad.addColorStop(0, 'rgba(30, 27, 75, 0.9)');
+                    grad.addColorStop(0.7, 'rgba(15, 23, 42, 0.95)');
+                    grad.addColorStop(1, 'rgba(2, 6, 23, 0.98)');
+                    pipCtx.fillStyle = grad;
+                    pipCtx.fill();
+                    pipCtx.save();
+                    pipCtx.clip();
+                    pipCtx.beginPath();
+                    pipCtx.ellipse(width / 2, ry + 20, rw * 0.6, 90, 0, 0, Math.PI * 2);
+                    const glossGrad = pipCtx.createLinearGradient(width / 2, ry, width / 2, ry + 110);
+                    glossGrad.addColorStop(0, 'rgba(255, 255, 255, 0.35)');
+                    glossGrad.addColorStop(1, 'rgba(255, 255, 255, 0.0)');
+                    pipCtx.fillStyle = glossGrad;
+                    pipCtx.fill();
+                    pipCtx.restore();
+                    pipCtx.lineWidth = 4;
+                    pipCtx.strokeStyle = 'rgba(165, 180, 252, 0.4)';
+                    pipCtx.stroke();
+                } else if (mat === 'classic-dark') {
+                    pipCtx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+                    pipCtx.fill();
+                    pipCtx.lineWidth = 2;
+                    pipCtx.strokeStyle = 'rgba(51, 65, 85, 0.8)';
+                    pipCtx.stroke();
+                } else if (mat === 'classic-light') {
+                    pipCtx.fillStyle = 'rgba(248, 250, 252, 0.94)';
+                    pipCtx.fill();
+                    pipCtx.lineWidth = 2;
+                    pipCtx.strokeStyle = 'rgba(203, 213, 225, 0.9)';
+                    pipCtx.stroke();
+                }
+                pipCtx.restore();
+            }
+
+            const isCountdown = state.mode === 'countdown';
+            const timeSec = isCountdown ? state.remainingSeconds : state.stopwatchSeconds;
+            const timeStr = formatTime(timeSec);
+            const isWarning = isCountdown && (state.remainingSeconds <= 60 || (state.remainingSeconds / state.totalSeconds) <= 0.2);
+
+            if (state.customLogoImg && state.customLogoImg.complete) {
+                const maxLogoW = 180 * state.logoScale;
+                const maxLogoH = 100 * state.logoScale;
+                let nw = state.customLogoImg.width;
+                let nh = state.customLogoImg.height;
+                const ratio = Math.min(maxLogoW / nw, maxLogoH / nh);
+                const drawW = nw * ratio;
+                const drawH = nh * ratio;
+
+                let lx = pipCanvas.width - drawW - 50;
+                let ly = 50;
+
+                switch (state.logoPosition) {
+                    case 'top-left':
+                        lx = 50; ly = 50; break;
+                    case 'center':
+                        lx = (pipCanvas.width - drawW) / 2; ly = (pipCanvas.height - drawH) / 2; break;
+                    case 'bottom-left':
+                        lx = 50; ly = pipCanvas.height - drawH - 50; break;
+                    case 'bottom-right':
+                        lx = pipCanvas.width - drawW - 50; ly = pipCanvas.height - drawH - 50; break;
+                    case 'top-right':
+                    default:
+                        lx = pipCanvas.width - drawW - 50; ly = 50; break;
+                }
+
+                pipCtx.drawImage(state.customLogoImg, lx, ly, drawW, drawH);
+            }
+
+            const fontConfig = fontStyleMap[state.fontStyleKey] || fontStyleMap['serif'];
+            const fontSize = Math.round(260 * state.zoomScale);
+            const percentVal = parseInt(state.pipOffsetY, 10) || 0;
+            const offsetY = (pipCanvas.height * percentVal) / 100;
+            const centerY = (pipCanvas.height / 2) + offsetY;
+
+            let fontColor = state.pipColor;
+            if (mat === 'classic-light' && fontColor === '#ffffff') {
+                fontColor = '#0f172a';
+            }
+
+            pipCtx.shadowColor = mat === 'classic-light' ? 'rgba(0, 0, 0, 0.25)' : 'rgba(0, 0, 0, 0.85)';
+            pipCtx.shadowBlur = 24;
+            pipCtx.fillStyle = isWarning ? '#f43f5e' : fontColor;
+            pipCtx.font = fontConfig.canvasFont.replace('{size}', fontSize);
+            pipCtx.textAlign = 'center';
+            pipCtx.textBaseline = 'middle';
+            pipCtx.fillText(timeStr, pipCanvas.width / 2, centerY);
+        }
+
+        async function togglePiP() {
+            try {
+                if (document.pictureInPictureElement) {
+                    await document.exitPictureInPicture();
+                    showToast('已關閉畫中畫懸浮窗');
+                    return;
+                }
+                if (!pipVideo || !pipCanvas) return;
+                
+                updatePipCanvas();
+                const stream = pipCanvas.captureStream(30);
+                pipVideo.srcObject = stream;
+                
+                await new Promise((resolve) => {
+                    if (pipVideo.readyState >= 1) {
+                        resolve();
+                    } else {
+                        pipVideo.onloadedmetadata = () => resolve();
+                    }
+                });
+
+                try {
+                    await pipVideo.play();
+                } catch (playError) {
+                    if (playError.name !== 'AbortError') console.warn("Video play error:", playError);
+                }
+
+                await pipVideo.requestPictureInPicture();
+                showToast('已開啟畫中畫懸浮窗');
+            } catch (err) {
+                console.error(err);
+                showToast('此瀏覽器未支援或無法啟動畫中畫模式');
+            }
+        }
+
+        function toggleFullscreen() {
+            const fullscreenIcon = document.getElementById('fullscreenIcon');
+            try {
+                if (!document.fullscreenElement) {
+                    if (document.documentElement.requestFullscreen) {
+                        document.documentElement.requestFullscreen().then(() => {
+                            if (fullscreenIcon) fullscreenIcon.className = "fa-solid fa-compress";
+                        }).catch(err => showToast('當前環境限制全螢幕功能'));
+                    }
+                } else {
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen().then(() => {
+                            if (fullscreenIcon) fullscreenIcon.className = "fa-solid fa-expand";
+                        });
+                    }
+                }
+            } catch (err) {
+                showToast('無法切換全螢幕');
+            }
+        }
+
+        function openPopoutWindow() {
+            if (state.popoutWindow && !state.popoutWindow.closed) {
+                state.popoutWindow.focus();
+                return;
+            }
+
+            state.popoutWindow = window.open('', 'PresentationTimerPopout', 'width=1100,height=750,menubar=no,toolbar=no,location=no,status=no');
+            if (!state.popoutWindow) {
+                showToast('跳出視窗被瀏覽器攔截，請允許開啟快顯視窗');
+                return;
+            }
+
+            const html = `
+            <!DOCTYPE html>
+            <html lang="zh-TW" class="dark">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+                <title>簡報演講大師 - 副螢幕講者響應式視窗</title>
+                <script src="https://cdn.tailwindcss.com"><\/script>
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+                <link rel="preconnect" href="https://fonts.googleapis.com">
+                <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+                <link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Bebas+Neue&family=Black+Ops+One&family=Cabin+Sketch:wght@700&family=Caveat:wght@700&family=Chakra+Petch:wght@700;900&family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@700;900&family=Courier+Prime:wght@700&family=Dancing+Script:wght@700&family=Fredoka+One&family=Fredoka:wght@600;700&family=Fredericka+the+Great&family=Inter:wght@100;200;400;700;800;900&family=Michroma&family=Mochiy+Pop+One&family=Monoton&family=Montserrat:wght@800;900&family=Noto+Sans+TC:wght@400;700;900&family=Orbitron:wght@800;900&family=Outfit:wght@800;900&family=Pacifico&family=Patrick+Hand&family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Poppins:wght@800;900&family=Press+Start+2P&family=Quicksand:wght@700&family=Rubik+Mono+One&family=Share+Tech+Mono&family=Silkscreen:wght@700&family=Sniglet:wght@800&family=Special+Elite&family=Teko:wght@700&family=Tilt+Neon&family=Titan+One&family=VT323&family=Vampiro+One&display=swap" rel="stylesheet">
+                <style>
+                    body { font-family: 'Noto Sans TC', 'Inter', sans-serif; user-select: none; -webkit-tap-highlight-color: transparent; }
+                    .font-style-sans { font-family: 'Noto Sans TC', 'Inter', sans-serif; }
+                    .font-style-serif { font-family: 'Playfair Display', 'Cinzel', serif; font-variant-numeric: tabular-nums; }
+                    .font-style-digital { font-family: 'Orbitron', 'Share Tech Mono', 'VT323', monospace; letter-spacing: 0.04em; }
+                    .font-style-geometric { font-family: 'Montserrat', 'Outfit', 'Poppins', sans-serif; font-weight: 900; }
+                    .font-style-rounded { font-family: 'Fredoka', 'Quicksand', sans-serif; font-weight: 700; }
+                    .font-style-flip { font-family: 'Bebas Neue', 'Teko', 'Impact', sans-serif; letter-spacing: 0.05em; }
+                    .font-style-typewriter { font-family: 'Courier Prime', 'Special Elite', monospace; font-weight: 700; }
+                    .font-style-pixel { font-family: 'Press Start 2P', 'Silkscreen', monospace; font-size: 0.6em; }
+                    .font-style-heavy { font-family: 'Black Ops One', 'Rubik Mono One', cursive; }
+                    .font-style-ultralight { font-family: 'Inter', sans-serif; font-weight: 200; letter-spacing: -0.02em; }
+                    .font-style-handwriting { font-family: 'Caveat', 'Patrick Hand', 'Architects Daughter', cursive; font-weight: 700; }
+                    .font-style-jelly { font-family: 'Titan One', 'Sniglet', 'Fredoka One', cursive; text-shadow: 2px 4px 8px rgba(0,0,0,0.4); }
+                    .font-style-metallic { font-family: 'Chakra Petch', 'Michroma', 'Orbitron', sans-serif; font-weight: 900; letter-spacing: 0.06em; }
+                    .font-style-fluffy { font-family: 'Mochiy Pop One', cursive; font-weight: 700; }
+                    .font-style-botanical { font-family: 'Cinzel Decorative', 'Playfair Display', serif; font-weight: 700; }
+                    .font-style-literary { font-family: 'Dancing Script', 'Caveat', cursive; font-weight: 700; }
+                    .font-style-chalkboard { font-family: 'Cabin Sketch', 'Fredericka the Great', cursive; font-weight: 700; }
+                    .font-style-vintage { font-family: 'Pacifico', 'Monoton', cursive; font-weight: 700; }
+                    .font-style-neon { font-family: 'Tilt Neon', 'Vampiro One', 'Monoton', cursive; letter-spacing: 0.05em; text-shadow: 0 0 10px currentColor; }
+                    ::-webkit-scrollbar { width: 4px; height: 4px; }
+                    ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.4); }
+                    ::-webkit-scrollbar-thumb { background: rgba(51, 65, 85, 0.6); border-radius: 2px; }
+                </style>
+            </head>
+            <body class="bg-slate-950 text-slate-100 min-h-screen w-screen flex flex-col justify-between p-3 sm:p-5 md:p-6 overflow-x-hidden relative selection:bg-indigo-500 selection:text-white">
+                
+                <div id="popoutLogoFloating" class="absolute pointer-events-none z-20 flex items-center justify-center transition-all duration-300"></div>
+
+                <!-- 頂部資訊列 -->
+                <div class="w-full flex flex-col sm:flex-row justify-between items-start sm:items-center text-slate-300 border-b border-slate-800 pb-2 sm:pb-3 z-10 flex-shrink-0 gap-2">
+                    <div class="flex items-center space-x-2 sm:space-x-3 min-w-0 w-full sm:w-auto">
+                        <div id="popoutLogoLeftContainer" class="flex items-center flex-shrink-0 empty:hidden"></div>
+                        <span id="popoutSection" class="text-base sm:text-xl md:text-2xl font-bold text-indigo-400 truncate max-w-full">當前章節</span>
+                    </div>
+                    <div class="flex items-center justify-between w-full sm:w-auto gap-2">
+                        <span id="popoutStatus" class="px-3 py-1 rounded-full text-xs sm:text-sm font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex-shrink-0">準備就緒</span>
+                        <div id="popoutLogoContainer" class="flex items-center flex-shrink-0 ml-auto empty:hidden"></div>
+                    </div>
+                </div>
+
+                <!-- 核心計時數字區塊 -->
+                <div id="popoutTimeWrapper" class="flex-1 w-full flex items-center justify-center text-center py-2 sm:py-4 overflow-hidden my-auto min-h-0">
+                    <div id="popoutTime" class="font-style-serif text-[24vw] sm:text-[28vw] md:text-[30vw] leading-none font-black text-emerald-400 tracking-tight drop-shadow-2xl select-none">20:00</div>
+                </div>
+
+                <!-- 講者備忘與提醒標語區塊 -->
+                <div id="popoutNotesContainer" class="w-full space-y-2 border-t border-slate-800 pt-3 z-10 flex-shrink-0 max-h-[35vh] overflow-y-auto">
+                    <div id="popoutNotesHeader" class="text-xs sm:text-sm font-bold text-amber-400 flex items-center space-x-2">
+                        <i class="fa-solid fa-bullhorn"></i>
+                        <span>講者重點備忘與提醒:</span>
+                    </div>
+                    <div id="popoutNotesGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3"></div>
+                </div>
+
+                <!-- 副螢幕快速修訂時間彈窗 -->
+                <div id="popoutTimeModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center hidden p-4">
+                    <div class="bg-slate-900 border border-indigo-500/80 rounded-2xl max-w-xs sm:max-w-sm w-full p-4 sm:p-6 text-center space-y-4 shadow-2xl">
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                            <h3 class="text-base sm:text-lg font-bold text-white flex items-center space-x-2">
+                                <i class="fa-solid fa-clock-rotate-left text-indigo-400"></i>
+                                <span>副螢幕修訂時間</span>
+                            </h3>
+                            <button id="closePopoutModalBtn" class="text-slate-400 hover:text-white p-1 rounded-lg">
+                                <i class="fa-solid fa-xmark text-lg sm:text-xl"></i>
+                            </button>
+                        </div>
+                        <div class="flex items-center justify-center space-x-2 sm:space-x-3 py-2 sm:py-3">
+                            <div class="text-center">
+                                <label class="text-xs text-slate-400 block mb-1">分鐘 (Min)</label>
+                                <input id="popoutModalMin" type="number" min="0" max="999" value="10" class="w-20 sm:w-24 bg-slate-800 border border-slate-700 text-indigo-200 font-mono text-xl sm:text-2xl font-bold rounded-xl px-2 py-2 text-center focus:outline-none focus:border-indigo-500">
+                            </div>
+                            <span class="text-2xl sm:text-3xl font-bold text-slate-500 mt-4">:</span>
+                            <div class="text-center">
+                                <label class="text-xs text-slate-400 block mb-1">秒數 (Sec)</label>
+                                <input id="popoutModalSec" type="number" min="0" max="59" value="0" class="w-20 sm:w-24 bg-slate-800 border border-slate-700 text-indigo-200 font-mono text-xl sm:text-2xl font-bold rounded-xl px-2 py-2 text-center focus:outline-none focus:border-indigo-500">
+                            </div>
+                        </div>
+                        <button id="confirmPopoutModalBtn" class="w-full py-2.5 sm:py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs sm:text-sm font-bold transition shadow-lg shadow-indigo-600/30">
+                            儲存時間修訂
+                        </button>
+                    </div>
+                </div>
+            </body>
+            </html>`;
+            state.popoutWindow.document.write(html);
+            state.popoutWindow.document.close();
+
+            const pDoc = state.popoutWindow.document;
+            const popoutModal = pDoc.getElementById('popoutTimeModal');
+            const popoutMin = pDoc.getElementById('popoutModalMin');
+            const popoutSec = pDoc.getElementById('popoutModalSec');
+            const closeBtn = pDoc.getElementById('closePopoutModalBtn');
+            const confirmBtn = pDoc.getElementById('confirmPopoutModalBtn');
+
+            const openPopoutModal = () => {
+                if (!popoutModal) return;
+                const mins = Math.floor(state.remainingSeconds / 60);
+                const secs = state.remainingSeconds % 60;
+                if (popoutMin) popoutMin.value = mins;
+                if (popoutSec) popoutSec.value = secs;
+                popoutModal.classList.remove('hidden');
+                if (popoutMin) { popoutMin.focus(); popoutMin.select(); }
+            };
+
+            const closePopoutModal = () => {
+                if (!popoutModal) return;
+                popoutModal.classList.add('hidden');
+                state.popoutWindow.focus();
+            };
+
+            const submitPopoutModal = () => {
+                const mins = parseInt(popoutMin?.value || 0, 10);
+                const secs = parseInt(popoutSec?.value || 0, 10);
+                const total = mins * 60 + secs;
+                if (total <= 0) return;
+                pauseTimer();
+                state.mode = 'countdown';
+                state.totalSeconds = total;
+                state.remainingSeconds = total;
+                state.status = 'stopped';
+                renderTimer();
+                closePopoutModal();
+                showToast(`副螢幕修改時間為 ${mins} 分 ${secs} 秒`);
+            };
+
+            closeBtn?.addEventListener('click', closePopoutModal);
+            confirmBtn?.addEventListener('click', submitPopoutModal);
+            
+            [popoutMin, popoutSec].forEach(input => {
+                input?.addEventListener('keydown', (ev) => {
+                    if (ev.key === ' ' || ev.code === 'Space' || ev.key.toLowerCase() === 'r' || ev.key.toLowerCase() === 's') {
+                        ev.stopPropagation();
+                    } else if (ev.key === 'Enter') {
+                        ev.preventDefault();
+                        ev.stopPropagation();
+                        submitPopoutModal();
+                    } else if (ev.key === 'Escape') {
+                        ev.preventDefault();
+                        ev.stopPropagation();
+                        closePopoutModal();
+                    }
+                });
+            });
+
+            state.popoutWindow.addEventListener('keydown', (e) => {
+                const isModalOpen = popoutModal && !popoutModal.classList.contains('hidden');
+                const isInputFocused = e.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName);
+                
+                if (isModalOpen) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault(); e.stopPropagation(); submitPopoutModal(); return;
+                    } else if (e.key === 'Escape') {
+                        e.preventDefault(); e.stopPropagation(); closePopoutModal(); return;
+                    }
+                }
+
+                if (isModalOpen || isInputFocused) return;
+
+                const code = e.code ? e.code.toLowerCase() : '';
+                const key = e.key ? e.key.toLowerCase() : '';
+
+                if (code === 'space' || key === ' ' || e.keyCode === 32) {
+                    e.preventDefault(); e.stopPropagation(); toggleTimer();
+                } else if (key === 'r' || code === 'keyr' || e.keyCode === 82) {
+                    e.preventDefault(); e.stopPropagation(); resetTimer();
+                } else if (key === 's' || code === 'keys' || e.keyCode === 83 || key === 'enter' || code === 'enter') {
+                    e.preventDefault(); e.stopPropagation(); openPopoutModal();
+                }
+            }, true);
+
+            updatePopoutWindow();
+            showToast('已開啟響應式副螢幕講者視窗');
+        }
+
+        function updatePopoutWindow() {
+            if (!state.popoutWindow || state.popoutWindow.closed) return;
+            const doc = state.popoutWindow.document;
+            const popoutBody = doc.body;
+            const popoutTime = doc.getElementById('popoutTime');
+            const popoutTimeWrapper = doc.getElementById('popoutTimeWrapper');
+            const popoutStatus = doc.getElementById('popoutStatus');
+            const popoutSection = doc.getElementById('popoutSection');
+            const popoutNotesContainer = doc.getElementById('popoutNotesContainer');
+            const popoutNotesGrid = doc.getElementById('popoutNotesGrid');
+            const popoutLogoLeftContainer = doc.getElementById('popoutLogoLeftContainer');
+            const popoutLogoContainer = doc.getElementById('popoutLogoContainer');
+            const popoutLogoFloating = doc.getElementById('popoutLogoFloating');
+
+            if (popoutBody) {
+                if (state.customPopoutBgUrl) {
+                    popoutBody.style.backgroundImage = `url('${state.customPopoutBgUrl}')`;
+                    popoutBody.style.backgroundSize = 'cover';
+                    popoutBody.style.backgroundPosition = 'center';
+                    popoutBody.style.backgroundRepeat = 'no-repeat';
+                } else {
+                    popoutBody.style.backgroundImage = 'none';
+                }
+            }
+
+            const isCountdown = state.mode === 'countdown';
+            const timeSec = isCountdown ? state.remainingSeconds : state.stopwatchSeconds;
+            const isWarning = isCountdown && (state.remainingSeconds <= 60 || (state.remainingSeconds / state.totalSeconds) <= 0.2);
+            const fontConfig = fontStyleMap[state.fontStyleKey] || fontStyleMap['serif'];
+
+            const secFontClass = fontStyleMap[state.popoutSectionFont] ? fontStyleMap[state.popoutSectionFont].cssClass : 'font-style-sans';
+            const noteFontClass = fontStyleMap[state.popoutNoteFont] ? fontStyleMap[state.popoutNoteFont].cssClass : 'font-style-sans';
+            const qaFontClass = fontStyleMap[state.popoutQaFont] ? fontStyleMap[state.popoutQaFont].cssClass : 'font-style-sans';
+
+            if (popoutLogoLeftContainer && popoutLogoContainer && popoutLogoFloating) {
+                popoutLogoLeftContainer.innerHTML = '';
+                popoutLogoContainer.innerHTML = '';
+                popoutLogoFloating.innerHTML = '';
+                popoutLogoFloating.className = "absolute pointer-events-none z-20 flex items-center justify-center transition-all duration-300";
+
+                if (state.customLogoUrl) {
+                    const logoH = Math.round(40 * state.logoScale);
+                    const maxW = Math.round(160 * state.logoScale);
+                    const imgHtml = `<img src="${state.customLogoUrl}" alt="Logo" style="height: ${logoH}px; max-width: ${maxW}px;" class="object-contain drop-shadow-md">`;
+
+                    if (state.logoPosition === 'top-right') {
+                        popoutLogoContainer.innerHTML = imgHtml;
+                    } else if (state.logoPosition === 'top-left') {
+                        popoutLogoLeftContainer.innerHTML = imgHtml;
+                    } else if (state.logoPosition === 'center') {
+                        popoutLogoFloating.classList.add('top-1/2', 'left-1/2', '-translate-x-1/2', '-translate-y-1/2', 'opacity-80');
+                        popoutLogoFloating.innerHTML = `<img src="${state.customLogoUrl}" alt="Logo" style="height: ${Math.round(80 * state.logoScale)}px; max-width: ${Math.round(300 * state.logoScale)}px;" class="object-contain drop-shadow-2xl">`;
+                    } else if (state.logoPosition === 'bottom-left') {
+                        popoutLogoFloating.classList.add('bottom-3', 'left-3');
+                        popoutLogoFloating.innerHTML = imgHtml;
+                    } else if (state.logoPosition === 'bottom-right') {
+                        popoutLogoFloating.classList.add('bottom-3', 'right-3');
+                        popoutLogoFloating.innerHTML = imgHtml;
+                    }
+                }
+            }
+
+            if (popoutTimeWrapper) {
+                popoutTimeWrapper.className = `flex-1 w-full flex items-center justify-center text-center py-2 overflow-hidden my-auto`;
+            }
+
+            if (popoutTime) {
+                popoutTime.textContent = formatTime(timeSec);
+                const blinkClass = state.isBlinking ? 'animate-pulse' : '';
+                const activeColor = isWarning ? 'text-rose-500' : state.popoutColor;
+                popoutTime.className = `${fontConfig.cssClass} text-[28vw] sm:text-[30vw] leading-none font-black tracking-tight drop-shadow-2xl select-none ${activeColor} ${blinkClass}`;
+                popoutTime.style.transform = `scale(${state.popoutZoomScale}) translateY(${state.popoutOffsetY})`;
+                popoutTime.style.transformOrigin = 'center center';
+                popoutTime.style.transition = 'transform 0.2s ease-out';
+            }
+
+            const activeNotes = state.popoutNotes.filter(n => n.show && n.text.trim() !== '');
+
+            if (popoutStatus && popoutSection) {
+                const qaIndex = state.qaItems.findIndex(q => q.id === state.activeQaId);
+                if (qaIndex !== -1) {
+                    const activeQa = state.qaItems[qaIndex];
+                    popoutSection.textContent = `Q${qaIndex + 1} 提問: ${activeQa.text}`;
+                    popoutSection.className = `${state.popoutQaSize} ${qaFontClass} font-black drop-shadow-lg animate-pulse leading-tight ${state.popoutQaColor.split(' ')[0]}`;
+                    popoutStatus.style.display = 'inline-block';
+                    popoutStatus.textContent = `Q${qaIndex + 1} 進行中`;
+                    popoutStatus.className = `px-4 py-1.5 rounded-full text-sm sm:text-lg font-black border-2 shadow-xl tracking-wider ${state.popoutQaColor}`;
+                } else if (state.sections.length > 0 && state.sections[state.currentSectionIndex]) {
+                    popoutSection.textContent = `主題: ${state.sections[state.currentSectionIndex].title}`;
+                    popoutSection.className = `${state.popoutSectionSize} ${secFontClass} font-bold ${state.popoutSectionColor}`;
+                    popoutStatus.style.display = 'inline-block';
+                    popoutStatus.textContent = state.status === 'running' ? '計時中' : (state.status === 'paused' ? '已暫停' : '準備就緒');
+                    popoutStatus.className = "px-3 py-1 rounded-full text-xs sm:text-sm font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
+                } else {
+                    popoutSection.textContent = state.mainTopicTitle || '研討會標題';
+                    popoutSection.className = `${state.popoutSectionSize} ${secFontClass} font-bold ${state.popoutSectionColor}`;
+                    popoutStatus.style.display = 'none';
+                }
+            }
+
+            if (popoutNotesContainer) {
+                popoutNotesContainer.style.display = activeNotes.length === 0 ? 'none' : 'block';
+            }
+
+            if (popoutNotesGrid && activeNotes.length > 0) {
+                const colsClass = activeNotes.length === 1 ? 'grid-cols-1' : (activeNotes.length === 2 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3');
+                popoutNotesGrid.className = `grid ${colsClass} gap-2 sm:gap-3`;
+                popoutNotesGrid.innerHTML = '';
+                activeNotes.forEach(note => {
+                    const div = document.createElement('div');
+                    div.className = `${state.popoutNoteColor} ${state.popoutNoteSize} ${noteFontClass} px-3 py-2.5 sm:px-5 sm:py-4 rounded-xl sm:rounded-2xl text-center font-bold shadow-xl tracking-wide leading-snug`;
+                    div.textContent = note.text;
+                    popoutNotesGrid.appendChild(div);
+                });
+            }
+        }
+
+        function renderTimer() {
+            const isCountdown = state.mode === 'countdown';
+            const timeSec = isCountdown ? state.remainingSeconds : state.stopwatchSeconds;
+            const isWarning = isCountdown && (state.remainingSeconds <= 60 || (state.remainingSeconds / state.totalSeconds) <= 0.2);
+            const blinkClass = state.isBlinking ? 'animate-pulse' : '';
+            const fontConfig = fontStyleMap[state.fontStyleKey] || fontStyleMap['serif'];
+
+            if (timeDisplay) {
+                timeDisplay.textContent = formatTime(timeSec);
+                timeDisplay.style.transform = `none`;
+                const textColor = isWarning ? 'text-rose-500' : 'text-emerald-400';
+                timeDisplay.className = `${fontConfig.cssClass} text-[18vw] xs:text-[16vw] sm:text-8xl md:text-9xl font-extrabold tracking-tight transition-all duration-200 ${textColor} drop-shadow-md select-none text-center transform origin-center leading-none ${blinkClass}`;
+            }
+
+            if (activeSectionLabel) {
+                const qaIndex = state.qaItems.findIndex(q => q.id === state.activeQaId);
+                if (qaIndex !== -1) {
+                    const activeQa = state.qaItems[qaIndex];
+                    activeSectionLabel.textContent = `Q${qaIndex + 1}: ${activeQa.text}`;
+                    activeSectionLabel.className = "text-xs font-semibold text-sky-300 max-w-[220px] sm:max-w-md truncate bg-sky-500/20 px-3 py-1 rounded-md border border-sky-400/40 animate-pulse";
+                } else if (state.sections.length > 0 && state.sections[state.currentSectionIndex]) {
+                    activeSectionLabel.textContent = `章節: ${state.sections[state.currentSectionIndex].title}`;
+                    activeSectionLabel.className = "text-xs font-semibold text-indigo-400 max-w-[200px] sm:max-w-xs truncate bg-indigo-500/10 px-2.5 py-1 rounded-md border border-indigo-500/20";
+                } else {
+                    activeSectionLabel.textContent = `研討會標題: ${state.mainTopicTitle}`;
+                    activeSectionLabel.className = "text-xs font-semibold text-indigo-400 max-w-[200px] sm:max-w-xs truncate bg-indigo-500/10 px-2.5 py-1 rounded-md border border-indigo-500/20";
+                }
+            }
+
+            if (timerSubtext) {
+                const totalMins = Math.floor(state.totalSeconds / 60);
+                timerSubtext.textContent = isCountdown
+                    ? `總時長：${totalMins} 分鐘 ${isWarning ? ' (時間即將用盡！)' : ''}`
+                    : `正數計時中`;
+            }
+
+            if (progressBar && isCountdown) {
+                const pct = Math.max(0, Math.min(100, (state.remainingSeconds / state.totalSeconds) * 100));
+                progressBar.style.width = `${pct}%`;
+                if (pct <= 20 || state.remainingSeconds <= 60) {
+                    progressBar.className = 'bg-rose-500 h-full transition-all duration-500 rounded-full';
+                } else if (pct <= 40) {
+                    progressBar.className = 'bg-amber-500 h-full transition-all duration-500 rounded-full';
+                } else {
+                    progressBar.className = 'bg-emerald-500 h-full transition-all duration-500 rounded-full';
+                }
+            }
+
+            if (startPauseBtn) {
+                if (state.status === 'running') {
+                    startPauseBtn.innerHTML = `<i class="fa-solid fa-pause"></i><span>暫停 (Space)</span>`;
+                    startPauseBtn.className = "py-3 px-4 bg-amber-600 hover:bg-amber-500 text-white rounded-xl font-bold text-base transition flex items-center justify-center space-x-2 shadow-lg shadow-amber-600/20 active:scale-95";
+                } else {
+                    startPauseBtn.innerHTML = `<i class="fa-solid fa-play"></i><span>${state.status === 'paused' ? '繼續' : '開始計時'} (Space)</span>`;
+                    startPauseBtn.className = "py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-base transition flex items-center justify-center space-x-2 shadow-lg shadow-emerald-600/20 active:scale-95";
+                }
+            }
+
+            if (statusBadge) {
+                if (state.status === 'running') {
+                    statusBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 mr-2 animate-pulse"></span>計時中`;
+                    statusBadge.className = "inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase tracking-wider";
+                } else if (state.status === 'paused') {
+                    statusBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400 mr-2"></span>已暫停`;
+                    statusBadge.className = "inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 uppercase tracking-wider";
+                } else {
+                    statusBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-slate-400 mr-2"></span>準備就緒`;
+                    statusBadge.className = "inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-slate-500/10 text-slate-400 border border-slate-500/20 uppercase tracking-wider";
+                }
+            }
+
+            updatePopoutWindow();
+            updatePipCanvas();
+            broadcastSyncState();
+        }
+
+        const syncChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('presentation_timer_sync') : null;
+        
+        function broadcastSyncState() {
+            const isCountdown = state.mode === 'countdown';
+            const timeSec = isCountdown ? state.remainingSeconds : state.stopwatchSeconds;
+            const qaIndex = state.qaItems.findIndex(q => q.id === state.activeQaId);
+            const activeQa = qaIndex !== -1 ? state.qaItems[qaIndex] : null;
+
+            const syncPayload = {
+                timeSec,
+                mode: state.mode,
+                status: state.status,
+                fontStyleKey: state.fontStyleKey,
+                activeQaText: activeQa ? activeQa.text : null,
+                activeQaIndex: qaIndex !== -1 ? qaIndex + 1 : null,
+                sectionTitle: state.sections[state.currentSectionIndex] ? state.sections[state.currentSectionIndex].title : state.mainTopicTitle,
+                isWarning: isCountdown && (state.remainingSeconds <= 60 || (state.remainingSeconds / state.totalSeconds) <= 0.2),
+                popoutColor: state.popoutColor,
+                popoutOffsetY: state.popoutOffsetY,
+                popoutSectionColor: state.popoutSectionColor,
+                popoutSectionSize: state.popoutSectionSize,
+                popoutSectionFont: state.popoutSectionFont,
+                popoutNoteColor: state.popoutNoteColor,
+                popoutNoteSize: state.popoutNoteSize,
+                popoutNoteFont: state.popoutNoteFont,
+                popoutQaColor: state.popoutQaColor,
+                popoutQaSize: state.popoutQaSize,
+                popoutQaFont: state.popoutQaFont,
+                popoutZoomScale: state.popoutZoomScale,
+                logoUrl: state.customLogoUrl,
+                logoScale: state.logoScale,
+                logoPosition: state.logoPosition,
+                customPopoutBgUrl: state.customPopoutBgUrl,
+                isBlinking: state.isBlinking,
+                notes: state.popoutNotes.filter(n => n.show && n.text.trim() !== '')
+            };
+
+            if (syncChannel) syncChannel.postMessage(syncPayload);
+            try {
+                localStorage.setItem('presentation_timer_live', JSON.stringify(syncPayload));
+            } catch (e) {}
+        }
+
+        // 監聽來自控制端發出的廣播（供獨立分頁使用）
+        if (syncChannel) {
+            syncChannel.onmessage = (event) => {
+                if (isStandaloneViewer && window.renderStandaloneView) {
+                    window.renderStandaloneView(event.data);
+                }
+            };
+        }
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'presentation_timer_live' && isStandaloneViewer && window.renderStandaloneView) {
+                try {
+                    window.renderStandaloneView(JSON.parse(e.newValue));
+                } catch (err) {}
+            }
+        });
+
+        fontStyleSelect?.addEventListener('change', (e) => {
+            const selectedKey = e.target.value;
+            if (fontStyleMap[selectedKey]) {
+                state.fontStyleKey = selectedKey;
+                renderTimer();
+                showToast(`已切換數字字體為: ${fontStyleMap[selectedKey].name}`);
+            }
+        });
+
+        bgFileInput?.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                state.customBgUrl = evt.target.result;
+                if (appBody) {
+                    appBody.style.backgroundImage = `url('${state.customBgUrl}')`;
+                    appBody.style.backgroundSize = 'cover';
+                    appBody.style.backgroundPosition = 'center';
+                    appBody.style.backgroundRepeat = 'no-repeat';
+                    appBody.style.backgroundAttachment = 'fixed';
+                }
+                if (clearBgBtn) clearBgBtn.classList.remove('hidden');
+                showToast('主畫面背景圖片上傳成功！');
+            };
+            reader.readAsDataURL(file);
+        });
+
+        clearBgBtn?.addEventListener('click', () => {
+            state.customBgUrl = null;
+            if (bgFileInput) bgFileInput.value = '';
+            if (clearBgBtn) clearBgBtn.classList.add('hidden');
+            if (appBody) appBody.style.backgroundImage = 'none';
+            showToast('已移除主畫面背景圖片');
+        });
+
+        popoutBgFileInput?.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                state.customPopoutBgUrl = evt.target.result;
+                if (clearPopoutBgBtn) clearPopoutBgBtn.classList.remove('hidden');
+                updatePopoutWindow();
+                showToast('副螢幕背景圖片上傳成功！');
+            };
+            reader.readAsDataURL(file);
+        });
+
+        clearPopoutBgBtn?.addEventListener('click', () => {
+            state.customPopoutBgUrl = null;
+            if (popoutBgFileInput) popoutBgFileInput.value = '';
+            if (clearPopoutBgBtn) clearPopoutBgBtn.classList.add('hidden');
+            updatePopoutWindow();
+            showToast('已移除副螢幕背景圖片');
+        });
+
+        bgOpacityInput?.addEventListener('input', (e) => {
+            const opacityVal = parseInt(e.target.value, 10);
+            state.bgOpacity = opacityVal / 100;
+            if (bgOpacityLabel) bgOpacityLabel.textContent = `${opacityVal}%`;
+            if (displayCard) displayCard.style.backgroundColor = `rgba(15, 23, 42, ${state.bgOpacity})`;
+        });
+
+        logoFileInput?.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const url = evt.target.result;
+                state.customLogoUrl = url;
+                const img = new Image();
+                img.onload = function() {
+                    state.customLogoImg = img;
+                    updatePipCanvas();
+                    updatePopoutWindow();
+                    if (clearLogoBtn) clearLogoBtn.classList.remove('hidden');
+                    if (logoScaleContainer) logoScaleContainer.classList.remove('hidden');
+                    showToast('Logo 上傳成功！');
+                };
+                img.src = url;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        clearLogoBtn?.addEventListener('click', () => {
+            state.customLogoUrl = null;
+            state.customLogoImg = null;
+            if (logoFileInput) logoFileInput.value = '';
+            if (clearLogoBtn) clearLogoBtn.classList.add('hidden');
+            if (logoScaleContainer) logoScaleContainer.classList.add('hidden');
+            updatePipCanvas();
+            updatePopoutWindow();
+            showToast('已移除 Logo');
+        });
+
+        function setLogoScale(val) {
+            const num = Math.min(300, Math.max(30, parseInt(val, 10) || 100));
+            state.logoScale = num / 100;
+            if (logoScaleInput) logoScaleInput.value = num;
+            if (logoScaleLabel) logoScaleLabel.textContent = `${num}%`;
+            updatePipCanvas();
+            updatePopoutWindow();
+        }
+
+        logoScaleInput?.addEventListener('input', (e) => { setLogoScale(e.target.value); });
+        logoZoomInBtn?.addEventListener('click', () => { setLogoScale(Math.round(state.logoScale * 100) + 10); });
+        logoZoomOutBtn?.addEventListener('click', () => { setLogoScale(Math.round(state.logoScale * 100) - 10); });
+
+        logoPositionSelect?.addEventListener('change', (e) => {
+            state.logoPosition = e.target.value;
+            updatePipCanvas();
+            updatePopoutWindow();
+            showToast(`已變更 Logo 位置`);
+        });
+
+        setInterval(() => {
+            const now = new Date();
+            const timeStr = now.toTimeString().split(' ')[0];
+            if (currentLocalTime) currentLocalTime.textContent = timeStr;
+            const currentLocalTimeMobile = document.getElementById('currentLocalTimeMobile');
+            if (currentLocalTimeMobile) currentLocalTimeMobile.textContent = timeStr.substring(0, 5);
+        }, 1000);
+
+        startPauseBtn?.addEventListener('click', toggleTimer);
+        resetBtn?.addEventListener('click', resetTimer);
+        soundToggleBtn?.addEventListener('click', toggleSound);
+
+        const blinkToggleBtn = document.getElementById('blinkToggleBtn');
+        const blinkIcon = document.getElementById('blinkIcon');
+
+        blinkToggleBtn?.addEventListener('click', () => {
+            state.isBlinking = !state.isBlinking;
+            if (state.isBlinking) {
+                blinkToggleBtn.className = "text-xs px-2 py-0.5 rounded bg-amber-600 text-white font-bold transition flex items-center space-x-1 shadow-md animate-bounce";
+                blinkIcon.className = "fa-solid fa-bolt text-amber-200";
+                showToast('已開啟數字閃爍提醒！');
+            } else {
+                blinkToggleBtn.className = "text-xs px-2 py-0.5 rounded bg-slate-700 hover:bg-slate-600 text-slate-300 transition flex items-center space-x-1 font-medium";
+                blinkIcon.className = "fa-solid fa-bolt text-slate-400";
+                showToast('已關閉閃爍提醒');
+            }
+            renderTimer();
+        });
+
+        minusOneMinBtn?.addEventListener('click', () => {
+            if (state.remainingSeconds >= 60) state.remainingSeconds -= 60;
+            else state.remainingSeconds = 0;
+            renderTimer();
+            showToast('減少 1 分鐘');
+        });
+
+        plusOneMinBtn?.addEventListener('click', () => {
+            state.remainingSeconds += 60;
+            state.totalSeconds += 60;
+            renderTimer();
+            showToast('增加 1 分鐘');
+        });
+
+        modeCountdownBtn?.addEventListener('click', () => {
+            state.mode = 'countdown';
+            modeCountdownBtn.className = "flex-1 px-3 py-2 rounded-lg text-xs font-semibold transition bg-indigo-600 text-white shadow";
+            modeStopwatchBtn.className = "flex-1 px-3 py-2 rounded-lg text-xs font-semibold transition text-slate-400 hover:text-white hover:bg-slate-800";
+            resetTimer();
+        });
+
+        modeStopwatchBtn?.addEventListener('click', () => {
+            state.mode = 'stopwatch';
+            modeStopwatchBtn.className = "flex-1 px-3 py-2 rounded-lg text-xs font-semibold transition bg-indigo-600 text-white shadow";
+            modeCountdownBtn.className = "flex-1 px-3 py-2 rounded-lg text-xs font-semibold transition text-slate-400 hover:text-white hover:bg-slate-800";
+            resetTimer();
+        });
+
+        const applyCustomTimeBtn = document.getElementById('applyCustomTimeBtn');
+        const customMinInput = document.getElementById('customMinInput');
+        const customSecInput = document.getElementById('customSecInput');
+
+        applyCustomTimeBtn?.addEventListener('click', () => {
+            const mins = parseInt(customMinInput?.value || 0, 10);
+            const secs = parseInt(customSecInput?.value || 0, 10);
+            const total = mins * 60 + secs;
+            if (total <= 0) return;
+            pauseTimer();
+            state.mode = 'countdown';
+            state.totalSeconds = total;
+            state.remainingSeconds = total;
+            state.status = 'stopped';
+            renderTimer();
+            showToast(`套用時間 ${mins} 分 ${secs} 秒`);
+        });
+
+        const pipBtn = document.getElementById('pipBtn');
+        const popoutBtn = document.getElementById('popoutBtn');
+        const openStandaloneWebBtn = document.getElementById('openStandaloneWebBtn');
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+
+        pipBtn?.addEventListener('click', togglePiP);
+        popoutBtn?.addEventListener('click', openPopoutWindow);
+        fullscreenBtn?.addEventListener('click', toggleFullscreen);
+
+        // 新增：開啟獨立網頁連結副螢幕
+        openStandaloneWebBtn?.addEventListener('click', () => {
+            const standaloneUrl = getStandaloneUrl();
+            window.open(standaloneUrl, '_blank');
+            showToast('已開啟獨立網頁副螢幕 (可直接分享此 URL)');
+        });
+
+        function getStandaloneUrl() {
+            const url = new URL(window.location.href);
+            url.searchParams.set('view', 'display');
+            return url.toString();
+        }
+
+        let qrcodeObj = null;
+        const qrCodeModalBtn = document.getElementById('qrCodeModalBtn');
+        const qrModal = document.getElementById('qrModal');
+        const closeQrModalBtn = document.getElementById('closeQrModalBtn');
+        const qrcodeContainer = document.getElementById('qrcodeContainer');
+        const syncUrlInput = document.getElementById('syncUrlInput');
+        const copySyncUrlBtn = document.getElementById('copySyncUrlBtn');
+
+        qrCodeModalBtn?.addEventListener('click', () => {
+            if (!qrModal) return;
+            const targetUrl = getStandaloneUrl();
+            if (syncUrlInput) syncUrlInput.value = targetUrl;
+
+            if (qrcodeContainer) {
+                qrcodeContainer.innerHTML = '';
+                qrcodeObj = new QRCode(qrcodeContainer, {
+                    text: targetUrl,
+                    width: 180,
+                    height: 180,
+                    colorDark : "#0f172a",
+                    colorLight : "#ffffff",
+                    correctLevel : QRCode.CorrectLevel.H
+                });
+            }
+
+            qrModal.classList.remove('hidden');
+            setTimeout(() => {
+                qrModal.classList.remove('opacity-0');
+                qrModal.firstElementChild.classList.remove('scale-95');
+                qrModal.firstElementChild.classList.add('scale-100');
+            }, 10);
+        });
+
+        const closeQrModal = () => {
+            if (!qrModal) return;
+            qrModal.firstElementChild.classList.remove('scale-100');
+            qrModal.firstElementChild.classList.add('scale-95');
+            qrModal.classList.add('opacity-0');
+            setTimeout(() => { qrModal.classList.add('hidden'); }, 300);
+        };
+
+        closeQrModalBtn?.addEventListener('click', closeQrModal);
+        qrModal?.addEventListener('click', (e) => { if (e.target === qrModal) closeQrModal(); });
+
+        copySyncUrlBtn?.addEventListener('click', () => {
+            if (syncUrlInput) {
+                syncUrlInput.select();
+                try {
+                    document.execCommand('copy');
+                    showToast('已成功複製網址連結！');
+                } catch (err) {
+                    showToast('複製失敗，請手動複製網址');
+                }
+            }
+        });
+
+        zoomInBtn?.addEventListener('click', () => {
+            if (state.zoomScale < 2.0) {
+                state.zoomScale += 0.1;
+                if (zoomPercentLabel) zoomPercentLabel.textContent = `${Math.round(state.zoomScale * 100)}%`;
+                updatePipCanvas();
+            }
+        });
+        zoomOutBtn?.addEventListener('click', () => {
+            if (state.zoomScale > 0.6) {
+                state.zoomScale -= 0.1;
+                if (zoomPercentLabel) zoomPercentLabel.textContent = `${Math.round(state.zoomScale * 100)}%`;
+                updatePipCanvas();
+            }
+        });
+        zoomResetBtn?.addEventListener('click', () => {
+            state.zoomScale = 1.0;
+            if (zoomPercentLabel) zoomPercentLabel.textContent = '100%';
+            updatePipCanvas();
+        });
+
+        function setTheme(themeName) {
+            state.theme = themeName;
+            [themeDarkBtn, themeLightBtn, themeWhiteBtn].forEach(btn => {
+                if (btn) btn.className = "px-3 py-1 rounded bg-slate-800 border border-slate-700 text-slate-400 hover:text-slate-200 transition";
+            });
+
+            if (themeName === 'dark') {
+                if (appBody) appBody.className = "bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white";
+                if (displayCard) displayCard.className = "relative bg-slate-900/90 backdrop-blur-md rounded-2xl border border-slate-800 p-8 sm:p-12 flex flex-col items-center justify-center transition-all duration-300 shadow-2xl min-h-[320px] overflow-hidden";
+                if (themeDarkBtn) themeDarkBtn.className = "px-3 py-1 rounded bg-indigo-600 border border-indigo-500 text-white font-bold transition shadow";
+                showToast('已切換至深色主題');
+            } else if (themeName === 'light') {
+                if (appBody) appBody.className = "bg-slate-200 text-slate-900 min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white";
+                if (displayCard) displayCard.className = "relative bg-slate-100/95 backdrop-blur-md rounded-2xl border border-slate-300 p-8 sm:p-12 flex flex-col items-center justify-center transition-all duration-300 shadow-xl min-h-[320px] overflow-hidden";
+                if (themeLightBtn) themeLightBtn.className = "px-3 py-1 rounded bg-indigo-600 border border-indigo-500 text-white font-bold transition shadow";
+                showToast('已切換至淺灰主題');
+            } else if (themeName === 'white') {
+                if (appBody) appBody.className = "bg-white text-slate-900 min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white";
+                if (displayCard) displayCard.className = "relative bg-slate-50 backdrop-blur-md rounded-2xl border border-slate-200 p-8 sm:p-12 flex flex-col items-center justify-center transition-all duration-300 shadow-lg min-h-[320px] overflow-hidden";
+                if (themeWhiteBtn) themeWhiteBtn.className = "px-3 py-1 rounded bg-indigo-600 border border-indigo-500 text-white font-bold transition shadow";
+                showToast('已切換至純白主題');
+            }
+        }
+
+        themeDarkBtn?.addEventListener('click', () => setTheme('dark'));
+        themeLightBtn?.addEventListener('click', () => setTheme('light'));
+        themeWhiteBtn?.addEventListener('click', () => setTheme('white'));
+
+        popoutZoomInBtn?.addEventListener('click', () => {
+            if (state.popoutZoomScale < 3.0) {
+                state.popoutZoomScale += 0.1;
+                if (popoutZoomPercentLabel) popoutZoomPercentLabel.textContent = `${Math.round(state.popoutZoomScale * 100)}%`;
+                updatePopoutWindow();
+            }
+        });
+        popoutZoomOutBtn?.addEventListener('click', () => {
+            if (state.popoutZoomScale > 0.3) {
+                state.popoutZoomScale -= 0.1;
+                if (popoutZoomPercentLabel) popoutZoomPercentLabel.textContent = `${Math.round(state.popoutZoomScale * 100)}%`;
+                updatePopoutWindow();
+            }
+        });
+        popoutZoomResetBtn?.addEventListener('click', () => {
+            state.popoutZoomScale = 1.0;
+            if (popoutZoomPercentLabel) popoutZoomPercentLabel.textContent = '100%';
+            updatePopoutWindow();
+        });
+
+        pipColorSelect?.addEventListener('change', (e) => {
+            state.pipColor = e.target.value;
+            updatePipCanvas();
+            showToast('已變更畫中畫數字顏色');
+        });
+
+        pipMaterialSelect?.addEventListener('change', (e) => {
+            state.pipMaterial = e.target.value;
+            updatePipCanvas();
+            showToast('已變更畫中畫懸浮窗背景材質風格');
+        });
+
+        pipAlignSelect?.addEventListener('change', (e) => {
+            state.pipOffsetY = e.target.value;
+            updatePipCanvas();
+            showToast(`已調整畫中畫數字位置至 ${state.pipOffsetY}`);
+        });
+
+        popoutColorSelect?.addEventListener('change', (e) => {
+            state.popoutColor = e.target.value;
+            updatePopoutWindow();
+            showToast('已變更副螢幕數字顏色');
+        });
+
+        popoutAlignSelect?.addEventListener('change', (e) => {
+            state.popoutOffsetY = e.target.value;
+            updatePopoutWindow();
+            showToast(`已調整副螢幕數字位置至 ${state.popoutOffsetY}`);
+        });
+
+        popoutSectionColorSelect?.addEventListener('change', (e) => {
+            state.popoutSectionColor = e.target.value;
+            updatePopoutWindow();
+            showToast('已更新副螢幕章節顏色');
+        });
+
+        popoutSectionSizeSelect?.addEventListener('change', (e) => {
+            state.popoutSectionSize = e.target.value;
+            updatePopoutWindow();
+            showToast('已更新副螢幕章節字級');
+        });
+
+        popoutSectionFontSelect?.addEventListener('change', (e) => {
+            state.popoutSectionFont = e.target.value;
+            updatePopoutWindow();
+            showToast('已更新副螢幕章節字體風格');
+        });
+
+        popoutNoteColorSelect?.addEventListener('change', (e) => {
+            state.popoutNoteColor = e.target.value;
+            updatePopoutWindow();
+            showToast('已更新副螢幕備忘標語顏色');
+        });
+
+        popoutNoteSizeSelect?.addEventListener('change', (e) => {
+            state.popoutNoteSize = e.target.value;
+            updatePopoutWindow();
+            showToast('已更新副螢幕備忘標語字級');
+        });
+
+        popoutNoteFontSelect?.addEventListener('change', (e) => {
+            state.popoutNoteFont = e.target.value;
+            updatePopoutWindow();
+            showToast('已更新副螢幕備忘標語字體風格');
+        });
+
+        popoutQaColorSelect?.addEventListener('change', (e) => {
+            state.popoutQaColor = e.target.value;
+            updatePopoutWindow();
+            showToast('已更新副螢幕 QA 題目顏色');
+        });
+
+        popoutQaSizeSelect?.addEventListener('change', (e) => {
+            state.popoutQaSize = e.target.value;
+            updatePopoutWindow();
+            showToast('已更新副螢幕 QA 題目字級');
+        });
+
+        popoutQaFontSelect?.addEventListener('change', (e) => {
+            state.popoutQaFont = e.target.value;
+            updatePopoutWindow();
+            showToast('已更新副螢幕 QA 題目字體風格');
+        });
+
+        const addSectionBtn = document.getElementById('addSectionBtn');
+        const newSectionTitle = document.getElementById('newSectionTitle');
+        const newSectionMin = document.getElementById('newSectionMin');
+        const newSectionSec = document.getElementById('newSectionSec');
+
+        addSectionBtn?.addEventListener('click', () => {
+            const title = newSectionTitle?.value.trim() || '新章節';
+            const mins = parseInt(newSectionMin?.value || 0, 10);
+            const secs = parseInt(newSectionSec?.value || 0, 10);
+            if (mins === 0 && secs === 0) {
+                showToast('請設定大於 0 的時間！');
+                return;
+            }
+            state.sections.push({ id: Date.now(), title, minutes: mins, seconds: secs });
+            if (newSectionTitle) newSectionTitle.value = '';
+            if (newSectionSec) newSectionSec.value = '0';
+            renderAgendaList();
+            renderTimer();
+            showToast('已新增簡報章節');
+        });
+
+        const timeEditModal = document.getElementById('timeEditModal');
+        const closeTimeEditModalBtn = document.getElementById('closeTimeEditModalBtn');
+        const confirmTimeEditBtn = document.getElementById('confirmTimeEditBtn');
+        const modalEditMin = document.getElementById('modalEditMin');
+        const modalEditSec = document.getElementById('modalEditSec');
+
+        function openTimeEditModal() {
+            if (!timeEditModal) return;
+            const mins = Math.floor(state.remainingSeconds / 60);
+            const secs = state.remainingSeconds % 60;
+            if (modalEditMin) modalEditMin.value = mins;
+            if (modalEditSec) modalEditSec.value = secs;
+
+            timeEditModal.classList.remove('hidden');
+            setTimeout(() => {
+                timeEditModal.classList.remove('opacity-0');
+                timeEditModal.firstElementChild.classList.remove('scale-95');
+                timeEditModal.firstElementChild.classList.add('scale-100');
+                if (modalEditMin) { modalEditMin.focus(); modalEditMin.select(); }
+            }, 10);
+        }
+
+        function closeTimeEditModal() {
+            if (!timeEditModal) return;
+            timeEditModal.firstElementChild.classList.remove('scale-100');
+            timeEditModal.firstElementChild.classList.add('scale-95');
+            timeEditModal.classList.add('opacity-0');
+            setTimeout(() => {
+                timeEditModal.classList.add('hidden');
+                window.focus();
+                requestAnimationFrame(() => window.focus());
+            }, 300);
+        }
+
+        function submitTimeEdit() {
+            const mins = parseInt(modalEditMin?.value || 0, 10);
+            const secs = parseInt(modalEditSec?.value || 0, 10);
+            const total = mins * 60 + secs;
+            if (total <= 0) {
+                showToast('請設定大於 0 秒的時間！');
+                return;
+            }
+            pauseTimer();
+            state.mode = 'countdown';
+            state.totalSeconds = total;
+            state.remainingSeconds = total;
+            state.status = 'stopped';
+            renderTimer();
+            closeTimeEditModal();
+            showToast(`時間已修改為 ${mins} 分 ${secs} 秒`);
+        }
+
+        closeTimeEditModalBtn?.addEventListener('click', closeTimeEditModal);
+        confirmTimeEditBtn?.addEventListener('click', submitTimeEdit);
+        timeEditModal?.addEventListener('click', (e) => {
+            if (e.target === timeEditModal) closeTimeEditModal();
+        });
+
+        [modalEditMin, modalEditSec].forEach(input => {
+            input?.addEventListener('keydown', (e) => {
+                if (e.key === ' ' || e.code === 'Space' || e.key.toLowerCase() === 'r') {
+                    e.stopPropagation();
+                } else if (e.key === 'Enter') {
+                    e.preventDefault(); e.stopPropagation(); submitTimeEdit();
+                } else if (e.key === 'Escape') {
+                    e.preventDefault(); e.stopPropagation(); closeTimeEditModal();
+                }
+            });
+        });
+
+        const handleGlobalKeyDown = (e) => {
+            const isModalOpen = timeEditModal && !timeEditModal.classList.contains('hidden');
+            const isModalInput = e.target && (e.target.id === 'modalEditMin' || e.target.id === 'modalEditSec');
+            const isInputFocused = e.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName);
+            
+            if (isModalOpen && isModalInput) {
+                if (e.key === 'Enter' || e.key === 'Escape') return;
+                if (e.key === ' ' || e.code === 'Space' || e.key.toLowerCase() === 'r') {
+                    e.stopPropagation(); return;
+                }
+            }
+
+            if (isInputFocused && !isModalOpen) return;
+            
+            const key = e.key ? e.key.toLowerCase() : '';
+            const code = e.code ? e.code.toLowerCase() : '';
+
+            if (code === 'space' || key === ' ' || e.keyCode === 32) {
+                if (!isModalOpen) { e.preventDefault(); e.stopPropagation(); toggleTimer(); }
+            } else if (key === 'r' || code === 'keyr' || e.keyCode === 82) {
+                if (!isModalOpen) { e.preventDefault(); e.stopPropagation(); resetTimer(); }
+            } else if (key === 's' || code === 'keys' || e.keyCode === 83) {
+                if (!isModalOpen) { e.preventDefault(); e.stopPropagation(); openTimeEditModal(); }
+            } else if (key === 'f' || code === 'keyf') {
+                if (!isModalOpen) { e.preventDefault(); toggleFullscreen(); }
+            } else if (key === 'p' || code === 'keyp') {
+                if (!isModalOpen) { togglePiP(); }
+            }
+        };
+
+        window.addEventListener('keydown', handleGlobalKeyDown, true);
+        document.addEventListener('keydown', handleGlobalKeyDown, true);
+
+        const reclaimFocus = () => {
+            if (document.pictureInPictureElement) {
+                window.focus();
+                setTimeout(() => window.focus(), 10);
+                requestAnimationFrame(() => window.focus());
+            }
+        };
+        window.addEventListener('blur', reclaimFocus, true);
+        document.addEventListener('visibilitychange', reclaimFocus, true);
+        window.addEventListener('click', reclaimFocus, true);
+
+        window.addEventListener('load', () => {
+            if (!isStandaloneViewer) {
+                renderAgendaList();
+                renderPopoutNotesList();
+                renderQaList();
+                renderTimer();
+            }
+        });
+
+        /**
+         * 獨立網頁檢視器 (Standalone Viewer) 模式建置
+         */
+        function setupStandaloneViewerPage() {
+            document.body.innerHTML = `
+                <div id="standaloneApp" class="bg-slate-950 text-slate-100 min-h-screen w-screen flex flex-col justify-between p-3 sm:p-5 md:p-6 overflow-x-hidden relative selection:bg-indigo-500 selection:text-white">
+                    <div id="popoutLogoFloating" class="absolute pointer-events-none z-20 flex items-center justify-center transition-all duration-300"></div>
+
+                    <!-- 頂部資訊列 -->
+                    <div class="w-full flex flex-col sm:flex-row justify-between items-start sm:items-center text-slate-300 border-b border-slate-800 pb-2 sm:pb-3 z-10 flex-shrink-0 gap-2">
+                        <div class="flex items-center space-x-2 sm:space-x-3 min-w-0 w-full sm:w-auto">
+                            <div id="popoutLogoLeftContainer" class="flex items-center flex-shrink-0 empty:hidden"></div>
+                            <span id="popoutSection" class="text-base sm:text-xl md:text-2xl font-bold text-indigo-400 truncate max-w-full">等待同步中...</span>
+                        </div>
+                        <div class="flex items-center justify-between w-full sm:w-auto gap-2">
+                            <span id="popoutStatus" class="px-3 py-1 rounded-full text-xs sm:text-sm font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex-shrink-0">已連線</span>
+                            <div id="popoutLogoContainer" class="flex items-center flex-shrink-0 ml-auto empty:hidden"></div>
+                        </div>
+                    </div>
+
+                    <!-- 核心計時數字區塊 -->
+                    <div id="popoutTimeWrapper" class="flex-1 w-full flex items-center justify-center text-center py-2 sm:py-4 overflow-hidden my-auto min-h-0">
+                        <div id="popoutTime" class="font-style-serif text-[24vw] sm:text-[28vw] md:text-[30vw] leading-none font-black text-emerald-400 tracking-tight drop-shadow-2xl select-none">00:00</div>
+                    </div>
+
+                    <!-- 講者備忘與提醒標語區塊 -->
+                    <div id="popoutNotesContainer" class="w-full space-y-2 border-t border-slate-800 pt-3 z-10 flex-shrink-0 max-h-[35vh] overflow-y-auto">
+                        <div id="popoutNotesHeader" class="text-xs sm:text-sm font-bold text-amber-400 flex items-center space-x-2">
+                            <i class="fa-solid fa-bullhorn"></i>
+                            <span>講者重點備忘與提醒:</span>
+                        </div>
+                        <div id="popoutNotesGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3"></div>
+                    </div>
+                </div>
+            `;
+
+            window.renderStandaloneView = function(data) {
+                if (!data) return;
+                const popoutTime = document.getElementById('popoutTime');
+                const popoutSection = document.getElementById('popoutSection');
+                const popoutStatus = document.getElementById('popoutStatus');
+                const popoutNotesContainer = document.getElementById('popoutNotesContainer');
+                const popoutNotesGrid = document.getElementById('popoutNotesGrid');
+                const popoutLogoLeftContainer = document.getElementById('popoutLogoLeftContainer');
+                const popoutLogoContainer = document.getElementById('popoutLogoContainer');
+                const popoutLogoFloating = document.getElementById('popoutLogoFloating');
+
+                const fontConfig = fontStyleMap[data.fontStyleKey] || fontStyleMap['serif'];
+                const secFontClass = fontStyleMap[data.popoutSectionFont] ? fontStyleMap[data.popoutSectionFont].cssClass : 'font-style-sans';
+                const noteFontClass = fontStyleMap[data.popoutNoteFont] ? fontStyleMap[data.popoutNoteFont].cssClass : 'font-style-sans';
+                const qaFontClass = fontStyleMap[data.popoutQaFont] ? fontStyleMap[data.popoutQaFont].cssClass : 'font-style-sans';
+
+                if (popoutTime) {
+                    popoutTime.textContent = formatTime(data.timeSec);
+                    const blinkClass = data.isBlinking ? 'animate-pulse' : '';
+                    const activeColor = data.isWarning ? 'text-rose-500' : (data.popoutColor || 'text-emerald-400');
+                    popoutTime.className = `${fontConfig.cssClass} text-[28vw] sm:text-[30vw] leading-none font-black tracking-tight drop-shadow-2xl select-none ${activeColor} ${blinkClass}`;
+                    popoutTime.style.transform = `scale(${data.popoutZoomScale || 1.0}) translateY(${data.popoutOffsetY || '0%'})`;
+                    popoutTime.style.transformOrigin = 'center center';
+                }
+
+                if (popoutStatus && popoutSection) {
+                    if (data.activeQaText) {
+                        popoutSection.textContent = `Q${data.activeQaIndex} 提問: ${data.activeQaText}`;
+                        popoutSection.className = `${data.popoutQaSize || 'text-4xl'} ${qaFontClass} font-black drop-shadow-lg animate-pulse leading-tight ${(data.popoutQaColor || '').split(' ')[0]}`;
+                        popoutStatus.style.display = 'inline-block';
+                        popoutStatus.textContent = `Q${data.activeQaIndex} 進行中`;
+                        popoutStatus.className = `px-4 py-1.5 rounded-full text-sm sm:text-lg font-black border-2 shadow-xl tracking-wider ${data.popoutQaColor}`;
+                    } else {
+                        popoutSection.textContent = `主題: ${data.sectionTitle || '簡報發表'}`;
+                        popoutSection.className = `${data.popoutSectionSize || 'text-2xl'} ${secFontClass} font-bold ${data.popoutSectionColor || 'text-indigo-400'}`;
+                        popoutStatus.style.display = 'inline-block';
+                        popoutStatus.textContent = data.status === 'running' ? '計時中' : (data.status === 'paused' ? '已暫停' : '準備就緒');
+                        popoutStatus.className = "px-3 py-1 rounded-full text-xs sm:text-sm font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
+                    }
+                }
+
+                if (popoutLogoLeftContainer && popoutLogoContainer && popoutLogoFloating) {
+                    popoutLogoLeftContainer.innerHTML = '';
+                    popoutLogoContainer.innerHTML = '';
+                    popoutLogoFloating.innerHTML = '';
+                    popoutLogoFloating.className = "absolute pointer-events-none z-20 flex items-center justify-center transition-all duration-300";
+
+                    if (data.logoUrl) {
+                        const scale = data.logoScale || 1.0;
+                        const logoH = Math.round(40 * scale);
+                        const maxW = Math.round(160 * scale);
+                        const imgHtml = `<img src="${data.logoUrl}" alt="Logo" style="height: ${logoH}px; max-width: ${maxW}px;" class="object-contain drop-shadow-md">`;
+
+                        if (data.logoPosition === 'top-right') {
+                            popoutLogoContainer.innerHTML = imgHtml;
+                        } else if (data.logoPosition === 'top-left') {
+                            popoutLogoLeftContainer.innerHTML = imgHtml;
+                        } else if (data.logoPosition === 'center') {
+                            popoutLogoFloating.classList.add('top-1/2', 'left-1/2', '-translate-x-1/2', '-translate-y-1/2', 'opacity-80');
+                            popoutLogoFloating.innerHTML = `<img src="${data.logoUrl}" alt="Logo" style="height: ${Math.round(80 * scale)}px; max-width: ${Math.round(300 * scale)}px;" class="object-contain drop-shadow-2xl">`;
+                        } else if (data.logoPosition === 'bottom-left') {
+                            popoutLogoFloating.classList.add('bottom-3', 'left-3');
+                            popoutLogoFloating.innerHTML = imgHtml;
+                        } else if (data.logoPosition === 'bottom-right') {
+                            popoutLogoFloating.classList.add('bottom-3', 'right-3');
+                            popoutLogoFloating.innerHTML = imgHtml;
+                        }
+                    }
+                }
+
+                if (popoutNotesContainer && popoutNotesGrid) {
+                    const notes = data.notes || [];
+                    popoutNotesContainer.style.display = notes.length === 0 ? 'none' : 'block';
+                    if (notes.length > 0) {
+                        const colsClass = notes.length === 1 ? 'grid-cols-1' : (notes.length === 2 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3');
+                        popoutNotesGrid.className = `grid ${colsClass} gap-2 sm:gap-3`;
+                        popoutNotesGrid.innerHTML = '';
+                        notes.forEach(note => {
+                            const div = document.createElement('div');
+                            div.className = `${data.popoutNoteColor || 'bg-amber-500/20 text-amber-200'} ${data.popoutNoteSize || 'text-2xl'} ${noteFontClass} px-3 py-2.5 sm:px-5 sm:py-4 rounded-xl sm:rounded-2xl text-center font-bold shadow-xl tracking-wide leading-snug`;
+                            div.textContent = note.text;
+                            popoutNotesGrid.appendChild(div);
+                        });
+                    }
+                }
+
+                if (data.customPopoutBgUrl) {
+                    document.body.style.backgroundImage = `url('${data.customPopoutBgUrl}')`;
+                    document.body.style.backgroundSize = 'cover';
+                    document.body.style.backgroundPosition = 'center';
+                    document.body.style.backgroundRepeat = 'no-repeat';
+                }
+            };
+
+            // 初始化嘗試讀取舊快照
+            try {
+                const stored = localStorage.getItem('presentation_timer_live');
+                if (stored) window.renderStandaloneView(JSON.parse(stored));
+            } catch (e) {}
+        }
+    </script>
+</body>
+</html>
