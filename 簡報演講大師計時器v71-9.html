@@ -1,0 +1,1884 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>簡報演講大師計時器 - Presentation Master Timer</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- QRCode.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- Google Fonts: 19 款特色字型 + 介面字體 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Black+Ops+One&family=Chakra+Petch:wght@700&family=Cinzel:wght@700;900&family=Courier+Prime:wght@700&family=Fredoka:wght@700&family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@700;800&family=Lobster&family=Monoton&family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@700;900&family=Orbitron:wght@700;900&family=Oswald:wght@700&family=Pacifico&family=Permanent+Marker&family=Playfair+Display:ital,wght@0,800;1,800&family=Press+Start+2P&family=Righteous&family=Russo+One&family=Share+Tech+Mono&family=Silkscreen:wght@700&family=Teko:wght@700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-primary: #090d16;
+            --bg-secondary: #111827;
+            --card-bg: rgba(17, 24, 39, 0.85);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-color: #3b82f6;
+            --card-opacity: 0.85;
+        }
+
+        body.theme-dark {
+            --bg-primary: #090d16;
+            --bg-secondary: #111827;
+            --card-bg: rgba(17, 24, 39, var(--card-opacity));
+            --card-border: rgba(255, 255, 255, 0.12);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+        }
+
+        body.theme-slate {
+            --bg-primary: #1e293b;
+            --bg-secondary: #334155;
+            --card-bg: rgba(51, 65, 85, var(--card-opacity));
+            --card-border: rgba(255, 255, 255, 0.18);
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+        }
+
+        body.theme-light {
+            --bg-primary: #f1f5f9;
+            --bg-secondary: #ffffff;
+            --card-bg: rgba(255, 255, 255, var(--card-opacity));
+            --card-border: rgba(15, 23, 42, 0.12);
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+        }
+
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            transition: background-color 0.3s ease, color 0.3s ease;
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            overflow-x: hidden;
+        }
+
+        .glass-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            transition: background-color 0.25s ease, border-color 0.25s ease;
+        }
+
+        .tabular-nums {
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* 閃爍警示動畫 */
+        @keyframes urgentBlink {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.35; transform: scale(0.99); }
+        }
+        .animate-urgent-blink {
+            animation: urgentBlink 0.85s infinite ease-in-out;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); }
+            50% { box-shadow: 0 0 25px 6px rgba(239, 68, 68, 0.25); }
+        }
+        .urgent-border-glow {
+            animation: pulseGlow 1.2s infinite;
+            border-color: rgba(239, 68, 68, 0.8) !important;
+        }
+
+        /* 自訂捲軸 */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.3); border-radius: 9999px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.5); }
+
+        /* 行動端觸控優化 */
+        button, input, select {
+            touch-action: manipulation;
+        }
+    </style>
+</head>
+<body class="theme-dark min-h-screen flex flex-col">
+
+    <!-- 隱藏的畫中畫 (PiP) Canvas 與 Video 容器 -->
+    <canvas id="pipCanvas" width="1600" height="900" class="hidden"></canvas>
+    <video id="pipVideo" muted playsinline class="hidden"></video>
+
+    <!-- 品牌 Logo 浮層 (依方位顯示) -->
+    <div id="mainLogoOverlay" class="fixed z-30 pointer-events-none hidden transition-all duration-300">
+        <img id="mainLogoImg" src="" alt="Brand Logo" class="object-contain drop-shadow-lg rounded-lg">
+    </div>
+
+    <!-- 手機/平板遙控器專屬頂部橫幅 (當透過掃碼或 remote=1 進入時顯示) -->
+    <div id="remoteControlBanner" class="hidden bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 text-white px-4 py-2.5 shadow-lg z-40">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm">
+            <div class="flex items-center gap-2 font-bold">
+                <span class="relative flex h-3 w-3">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-200"></span>
+                </span>
+                <span>已連線至同步房間 [<span id="bannerRoomCode" class="font-mono tracking-wider underline">------</span>] — 操作將即時連動主控端主畫面</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="switchToPureDisplayMode()" class="px-3 py-1 bg-black/25 hover:bg-black/40 rounded-lg font-semibold transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-tv"></i> 切換純展示副螢幕
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 1. 主控端 / 行動雙向遙控主視圖 (Controller View) -->
+    <!-- ========================================== -->
+    <div id="controllerView" class="flex-1 flex flex-col">
+        <!-- 頂部導覽列 -->
+        <header class="glass-card sticky top-0 z-30 border-b px-3 sm:px-6 py-3">
+            <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+                <!-- 左側標題與同步狀態 -->
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
+                        <i class="fa-solid fa-stopwatch text-xl"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h1 class="font-black text-base sm:text-lg tracking-tight">簡報演講大師計時器</h1>
+                            <span class="hidden md:inline-block text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">PRO SYNC</span>
+                        </div>
+                        <p class="text-[11px] opacity-70 hidden sm:block">Presentation Master Timer · 雲端零延遲雙向控場</p>
+                    </div>
+                </div>
+
+                <!-- 右側功能按鈕列 -->
+                <div class="flex flex-wrap items-center gap-2">
+                    <!-- 跨裝置同步 QR 按鈕 (即時連線狀態燈號 + 房間代碼) -->
+                    <button id="qrSyncBtn" onclick="openQrModal()" class="px-3.5 py-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-emerald-400 font-bold text-xs sm:text-sm flex items-center gap-2 transition shadow-sm">
+                        <span id="syncStatusDot" class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
+                        <i class="fa-solid fa-qrcode"></i>
+                        <span>同步 QR [<span id="navRoomCode" class="font-mono tracking-wider">------</span>]</span>
+                    </button>
+
+                    <!-- 開啟獨立副螢幕視窗 -->
+                    <button onclick="openPopoutWindow()" class="px-3.5 py-2 rounded-xl bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/40 text-indigo-400 font-bold text-xs sm:text-sm flex items-center gap-2 transition" title="開啟獨立副螢幕講者視窗">
+                        <i class="fa-solid fa-up-right-from-square"></i>
+                        <span class="hidden sm:inline">副螢幕視窗</span>
+                    </button>
+
+                    <!-- 畫中畫 (PiP) 懸浮計時 -->
+                    <button id="pipToggleBtn" onclick="togglePiP()" class="px-3.5 py-2 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/40 text-purple-400 font-bold text-xs sm:text-sm flex items-center gap-2 transition" title="懸浮畫中畫 (支援簡報軟體上方置頂)">
+                        <i class="fa-solid fa-clone"></i>
+                        <span class="hidden md:inline">懸浮 PiP</span>
+                    </button>
+
+                    <!-- 音效測試/靜音開關 -->
+                    <button id="soundToggleBtn" onclick="toggleSound()" class="p-2.5 rounded-xl glass-card hover:bg-white/10 transition text-sm" title="警示音效開關">
+                        <i id="soundIcon" class="fa-solid fa-volume-high text-blue-400"></i>
+                    </button>
+
+                    <!-- 外觀與視覺設定抽屜按鈕 -->
+                    <button onclick="openSettingsModal()" class="p-2.5 rounded-xl glass-card hover:bg-white/10 transition text-sm" title="字體、PiP材質、Logo與主題設定">
+                        <i class="fa-solid fa-sliders text-amber-400"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- 主內容雙欄網格 -->
+        <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-5">
+            
+            <!-- 左欄 (7/12)：核心計時大螢幕 + 播控按鈕 + 時間微調 + 快捷時長 -->
+            <div class="lg:col-span-7 flex flex-col gap-5">
+                
+                <!-- 核心計時看板卡片 -->
+                <div id="mainTimerCard" class="glass-card rounded-3xl p-5 sm:p-8 flex flex-col items-center justify-between relative overflow-hidden shadow-2xl">
+                    <!-- 頂部狀態列：模式切換 + 當前主題標題 + 閃爍開關 -->
+                    <div class="w-full flex flex-wrap items-center justify-between gap-2 mb-4 z-10">
+                        <!-- 倒數 / 正數切換膠囊 -->
+                        <div class="inline-flex rounded-xl p-1 bg-black/30 border border-white/10">
+                            <button id="modeCountdownBtn" onclick="setTimerMode('countdown')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition bg-blue-600 text-white shadow">
+                                <i class="fa-solid fa-hourglass-half mr-1"></i>倒數計時
+                            </button>
+                            <button id="modeStopwatchBtn" onclick="setTimerMode('stopwatch')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white">
+                                <i class="fa-solid fa-stopwatch mr-1"></i>正數碼錶
+                            </button>
+                        </div>
+
+                        <!-- 狀態徽章 -->
+                        <div id="statusBadge" class="px-3 py-1 rounded-full text-xs font-bold bg-slate-500/20 text-slate-300 border border-slate-500/30 flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+                            <span>準備就緒</span>
+                        </div>
+
+                        <!-- 閃爍警示開關 -->
+                        <button id="blinkToggleBtn" onclick="toggleBlinkAlert()" class="px-3 py-1.5 rounded-xl text-xs font-bold border border-white/10 bg-black/25 hover:bg-white/10 transition flex items-center gap-1.5" title="時間到或最後倒數時閃爍提醒">
+                            <i class="fa-solid fa-bolt text-amber-400"></i>
+                            <span>閃爍警示: <strong id="blinkStateText">開</strong></span>
+                        </button>
+                    </div>
+
+                    <!-- 可編輯演講大主題標題 -->
+                    <div class="w-full text-center mb-1 z-10">
+                        <input id="mainTopicInput" type="text" value="2026 年度策略與創新發表會" onchange="updateTopicTitle(this.value)" placeholder="輸入演講主題名稱..." class="w-full bg-transparent text-center font-bold text-sm sm:text-base opacity-80 hover:opacity-100 focus:opacity-100 focus:outline-none focus:ring-1 focus:ring-blue-500/50 rounded-lg px-2 py-1 transition">
+                    </div>
+
+                    <!-- 當前章節提示標籤 -->
+                    <div id="activeSectionBanner" class="mb-2 px-4 py-1 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-400 text-xs sm:text-sm font-bold flex items-center gap-2 z-10">
+                        <i class="fa-solid fa-bookmark"></i>
+                        <span id="activeSectionLabel">開場破冰與議程介紹</span>
+                    </div>
+
+                    <!-- 超大計時數字顯示區 -->
+                    <div class="my-3 sm:my-5 w-full flex items-center justify-center select-none z-10">
+                        <div id="mainTimeDisplay" class="tabular-nums font-black tracking-tight text-center leading-none transition-colors duration-300 cursor-pointer" onclick="openQuickEditModal()" title="點擊或按 S 鍵快速修改時間" style="font-size: clamp(4.2rem, 13vw, 8.2rem); font-family: 'JetBrains Mono', monospace;">
+                            15:00
+                        </div>
+                    </div>
+
+                    <!-- 進度條 -->
+                    <div class="w-full bg-black/30 h-3.5 rounded-full overflow-hidden p-0.5 border border-white/10 mb-6 z-10">
+                        <div id="mainProgressBar" class="h-full rounded-full bg-gradient-to-r from-emerald-400 via-blue-500 to-indigo-500 transition-all duration-300" style="width: 100%;"></div>
+                    </div>
+
+                    <!-- 核心播控按鈕列 (超大觸控區域，適合手機/平板/電腦) -->
+                    <div class="w-full grid grid-cols-12 gap-3 z-10">
+                        <button id="startPauseBtn" onclick="toggleStartPause()" class="col-span-8 py-4 sm:py-5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black text-lg sm:text-xl shadow-xl shadow-emerald-600/25 flex items-center justify-center gap-3 active:scale-[0.98] transition">
+                            <i id="startPauseIcon" class="fa-solid fa-play"></i>
+                            <span id="startPauseText">開始計時</span>
+                        </button>
+                        <button onclick="resetTimer()" class="col-span-4 py-4 sm:py-5 rounded-2xl bg-slate-700/70 hover:bg-slate-600 text-white font-bold text-base sm:text-lg border border-white/10 flex items-center justify-center gap-2 active:scale-[0.98] transition">
+                            <i class="fa-solid fa-rotate-left"></i>
+                            <span>重置</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 時間微調與快捷設定卡片 -->
+                <div class="glass-card rounded-3xl p-5 flex flex-col gap-4">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <h2 class="font-bold text-sm flex items-center gap-2">
+                            <i class="fa-solid fa-clock-rotate-left text-blue-400"></i>
+                            <span>即時微調與快捷時長</span>
+                        </h2>
+                        <span class="text-[11px] opacity-60">快捷鍵：Space 開始/暫停 · R 重置 · S 快改時間</span>
+                    </div>
+
+                    <!-- +1分 / -1分 / 快速修訂 -->
+                    <div class="grid grid-cols-3 gap-2.5">
+                        <button onclick="adjustMinutes(-1)" class="py-3 px-3 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-400 font-bold text-sm flex items-center justify-center gap-1.5 active:scale-95 transition">
+                            <i class="fa-solid fa-minus"></i> 1 分鐘
+                        </button>
+                        <button onclick="adjustMinutes(1)" class="py-3 px-3 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-400 font-bold text-sm flex items-center justify-center gap-1.5 active:scale-95 transition">
+                            <i class="fa-solid fa-plus"></i> 1 分鐘
+                        </button>
+                        <button onclick="openQuickEditModal()" class="py-3 px-3 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-400 font-bold text-sm flex items-center justify-center gap-1.5 active:scale-95 transition">
+                            <i class="fa-solid fa-pen-to-square"></i> 快改 (S)
+                        </button>
+                    </div>
+
+                    <!-- 快捷預設時長 (3, 5, 10, 15, 20, 30 分) -->
+                    <div class="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                        <button onclick="setPresetMinutes(3)" class="py-2.5 rounded-xl bg-white/5 hover:bg-blue-500/20 border border-white/10 hover:border-blue-500/40 font-bold text-xs sm:text-sm transition">3 分</button>
+                        <button onclick="setPresetMinutes(5)" class="py-2.5 rounded-xl bg-white/5 hover:bg-blue-500/20 border border-white/10 hover:border-blue-500/40 font-bold text-xs sm:text-sm transition">5 分</button>
+                        <button onclick="setPresetMinutes(10)" class="py-2.5 rounded-xl bg-white/5 hover:bg-blue-500/20 border border-white/10 hover:border-blue-500/40 font-bold text-xs sm:text-sm transition">10 分</button>
+                        <button onclick="setPresetMinutes(15)" class="py-2.5 rounded-xl bg-white/5 hover:bg-blue-500/20 border border-white/10 hover:border-blue-500/40 font-bold text-xs sm:text-sm transition">15 分</button>
+                        <button onclick="setPresetMinutes(20)" class="py-2.5 rounded-xl bg-white/5 hover:bg-blue-500/20 border border-white/10 hover:border-blue-500/40 font-bold text-xs sm:text-sm transition">20 分</button>
+                        <button onclick="setPresetMinutes(30)" class="py-2.5 rounded-xl bg-white/5 hover:bg-blue-500/20 border border-white/10 hover:border-blue-500/40 font-bold text-xs sm:text-sm transition">30 分</button>
+                    </div>
+
+                    <!-- 自訂精確分秒輸入 -->
+                    <div class="flex items-center gap-2 pt-1 border-t border-white/10">
+                        <span class="text-xs font-semibold opacity-75 whitespace-nowrap">自訂精確時間：</span>
+                        <input id="customMinInput" type="number" min="0" max="999" value="15" class="w-20 px-2.5 py-2 rounded-xl bg-black/30 border border-white/15 text-center font-bold text-sm focus:outline-none focus:border-blue-500">
+                        <span class="text-xs opacity-70">分</span>
+                        <input id="customSecInput" type="number" min="0" max="59" value="0" class="w-20 px-2.5 py-2 rounded-xl bg-black/30 border border-white/15 text-center font-bold text-sm focus:outline-none focus:border-blue-500">
+                        <span class="text-xs opacity-70">秒</span>
+                        <button onclick="applyCustomTime()" class="ml-auto px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm transition">
+                            套用時間
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右欄 (5/12)：簡報章節流程 / 講者備忘標語 / Q&A 現場提問 分頁管理 -->
+            <div class="lg:col-span-5 flex flex-col gap-5">
+                <div class="glass-card rounded-3xl p-5 flex-1 flex flex-col">
+                    <!-- 分頁切換標籤 -->
+                    <div class="grid grid-cols-3 gap-1.5 p-1 rounded-2xl bg-black/30 border border-white/10 mb-4">
+                        <button id="tabSectionsBtn" onclick="switchRightTab('sections')" class="py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-blue-600 text-white shadow transition flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-list-ol"></i> 簡報章節
+                        </button>
+                        <button id="tabNotesBtn" onclick="switchRightTab('notes')" class="py-2.5 rounded-xl text-xs sm:text-sm font-bold text-slate-400 hover:text-white transition flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-comment-dots"></i> 講者標語
+                        </button>
+                        <button id="tabQaBtn" onclick="switchRightTab('qa')" class="py-2.5 rounded-xl text-xs sm:text-sm font-bold text-slate-400 hover:text-white transition flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-circle-question"></i> Q&A 提問
+                        </button>
+                    </div>
+
+                    <!-- 分頁 1：簡報流程章節 -->
+                    <div id="panelSections" class="flex-1 flex flex-col gap-3">
+                        <div class="flex gap-2">
+                            <input id="newSectionTitle" type="text" placeholder="新增章節名稱 (例如：產品實機展示)" class="flex-1 px-3 py-2 rounded-xl bg-black/30 border border-white/15 text-xs sm:text-sm focus:outline-none focus:border-blue-500">
+                            <input id="newSectionMinutes" type="number" min="1" max="180" value="5" class="w-16 px-2 py-2 rounded-xl bg-black/30 border border-white/15 text-center text-xs sm:text-sm font-bold" title="章節分鐘數">
+                            <button onclick="addSection()" class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm transition">
+                                <i class="fa-solid fa-plus"></i>
+                            </button>
+                        </div>
+                        <p class="text-[11px] opacity-65">點擊章節可立即同步切換主畫面與副螢幕章節，並可選擇是否套用該章節時長。</p>
+                        <div id="sectionsList" class="flex-1 overflow-y-auto space-y-2 max-h-[380px] pr-1"></div>
+                    </div>
+
+                    <!-- 分頁 2：副螢幕講者備忘標語 -->
+                    <div id="panelNotes" class="hidden flex-1 flex flex-col gap-3">
+                        <div class="flex gap-2">
+                            <input id="newNoteInput" type="text" placeholder="輸入提示講者的即時標語 (如：請放慢語速)" class="flex-1 px-3 py-2 rounded-xl bg-black/30 border border-white/15 text-xs sm:text-sm focus:outline-none focus:border-amber-500">
+                            <button onclick="addPopoutNote()" class="px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs sm:text-sm transition">
+                                <i class="fa-solid fa-paper-plane"></i>
+                            </button>
+                        </div>
+                        <p class="text-[11px] opacity-65">勾選啟用的標語會即時同步顯示於副螢幕與所有連線裝置。</p>
+                        <div id="notesList" class="flex-1 overflow-y-auto space-y-2 max-h-[380px] pr-1"></div>
+                    </div>
+
+                    <!-- 分頁 3：Q&A 現場提問題目 -->
+                    <div id="panelQa" class="hidden flex-1 flex flex-col gap-3">
+                        <div class="flex gap-2">
+                            <input id="newQaInput" type="text" placeholder="輸入現場觀眾或評審提問..." class="flex-1 px-3 py-2 rounded-xl bg-black/30 border border-white/15 text-xs sm:text-sm focus:outline-none focus:border-purple-500">
+                            <button onclick="addQaItem()" class="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs sm:text-sm transition">
+                                <i class="fa-solid fa-plus"></i>
+                            </button>
+                        </div>
+                        <div class="flex items-center justify-between text-[11px] opacity-65">
+                            <span>點選題目可高亮投影至副螢幕與主控端</span>
+                            <button onclick="clearActiveQa()" class="text-rose-400 hover:underline">取消高亮</button>
+                        </div>
+                        <div id="qaList" class="flex-1 overflow-y-auto space-y-2 max-h-[380px] pr-1"></div>
+                    </div>
+                </div>
+
+                <!-- 主控端 Q&A 即時高亮預覽卡 (當有選中 Q&A 時顯示) -->
+                <div id="controllerActiveQaCard" class="hidden glass-card rounded-2xl p-4 border-l-4 border-l-purple-500 bg-purple-500/10">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-[11px] font-black uppercase tracking-wider text-purple-400 flex items-center gap-1.5">
+                            <i class="fa-solid fa-microphone-lines"></i> 當前高亮 Q&A 提問
+                        </span>
+                        <button onclick="clearActiveQa()" class="text-xs opacity-70 hover:opacity-100"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    <p id="controllerActiveQaText" class="font-bold text-sm sm:text-base leading-snug"></p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 2. 純展示副螢幕模式 (Pure Display View: ?view=display&room=XXXXXX) -->
+    <!-- ========================================== -->
+    <div id="pureDisplayView" class="hidden fixed inset-0 z-50 bg-slate-950 text-white flex flex-col justify-between p-6 sm:p-12 select-none cursor-pointer" onclick="handleDisplayClick(event)">
+        <!-- 頂部資訊欄 -->
+        <div class="flex items-start justify-between gap-4 z-10">
+            <div>
+                <div id="dispHeaderTitle" class="text-lg sm:text-2xl font-bold opacity-75 mb-1">2026 年度策略與創新發表會</div>
+                <div id="dispSectionTitle" class="text-2xl sm:text-4xl font-black text-blue-400">開場破冰與議程介紹</div>
+            </div>
+            <div class="flex items-center gap-2 no-toggle" onclick="event.stopPropagation()">
+                <span class="px-3 py-1 rounded-full bg-white/10 text-xs font-mono opacity-75">房間: <strong id="dispRoomCode">------</strong></span>
+                <button onclick="switchToControllerMode()" class="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold transition">
+                    <i class="fa-solid fa-sliders mr-1"></i>切換遙控面板
+                </button>
+            </div>
+        </div>
+
+        <!-- 中央超大計時器 -->
+        <div class="flex-1 flex flex-col items-center justify-center my-4 z-10">
+            <div id="dispTimeText" class="tabular-nums font-black leading-none tracking-tight text-center" style="font-size: clamp(6rem, 23vw, 22rem); font-family: 'JetBrains Mono', monospace;">
+                15:00
+            </div>
+            <!-- 講者備忘標語橫幅 -->
+            <div id="dispNotesBox" class="mt-6 max-w-4xl text-center space-y-2"></div>
+        </div>
+
+        <!-- 底部 Q&A 提問卡與進度條 -->
+        <div class="w-full space-y-4 z-10">
+            <div id="dispQaBox" class="hidden max-w-5xl mx-auto p-5 sm:p-6 rounded-2xl bg-purple-900/40 border border-purple-400/40 backdrop-blur-md">
+                <div class="text-xs sm:text-sm font-black uppercase tracking-widest text-purple-300 mb-1">Q&A 現場提問</div>
+                <div id="dispQaText" class="text-xl sm:text-3xl font-bold leading-snug"></div>
+            </div>
+            <div class="w-full h-3 bg-white/10 rounded-full overflow-hidden">
+                <div id="dispProgressBar" class="h-full bg-emerald-400 transition-all duration-300" style="width: 100%;"></div>
+            </div>
+            <div class="flex justify-between text-xs opacity-50">
+                <span>點擊畫面可切換 開始/暫停 · 快捷鍵：Space 播放/暫停 · R 重置 · S 快改時間</span>
+                <span id="dispStatusText">已暫停</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 彈窗 A：跨裝置同步 QR Code 與房間管理 Modal -->
+    <!-- ========================================== -->
+    <div id="qrModal" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="glass-card bg-slate-900 border border-white/15 rounded-3xl max-w-lg w-full p-6 shadow-2xl relative">
+            <button onclick="closeQrModal()" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-11 h-11 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-wifi"></i>
+                </div>
+                <div>
+                    <h3 class="font-black text-lg">跨裝置雲端即時同步控制</h3>
+                    <p class="text-xs opacity-70">手機或平板掃描 QR Code，即可雙向遙控主控端畫面</p>
+                </div>
+            </div>
+
+            <!-- 當前房間代碼與雲端狀態 -->
+            <div class="p-4 rounded-2xl bg-black/40 border border-white/10 flex flex-wrap items-center justify-between gap-3 mb-4">
+                <div>
+                    <div class="text-[11px] uppercase tracking-wider opacity-60 font-bold">當前同步房間代碼</div>
+                    <div id="modalRoomCodeDisplay" class="text-3xl font-black font-mono tracking-widest text-emerald-400">------</div>
+                </div>
+                <div class="flex flex-col items-end gap-1.5">
+                    <span id="modalCloudStatusBadge" class="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+                        <span>雲端連線中...</span>
+                    </span>
+                    <button onclick="generateNewRoom()" class="px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-bold transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-arrows-rotate"></i> 換新房間
+                    </button>
+                </div>
+            </div>
+
+            <!-- QR Code 顯示區 -->
+            <div class="flex flex-col items-center justify-center p-5 rounded-2xl bg-white text-slate-900 mb-4 shadow-inner">
+                <div id="qrcodeContainer" class="flex items-center justify-center"></div>
+                <p class="text-[11px] font-bold text-slate-500 mt-3 text-center">使用手機 / 平板相機掃描，立即開啟行動遙控器</p>
+            </div>
+
+            <!-- 連結複製與模式切換 -->
+            <div class="space-y-2.5">
+                <div class="flex gap-2">
+                    <input id="syncShareUrlInput" type="text" readonly class="flex-1 px-3 py-2 rounded-xl bg-black/40 border border-white/15 text-xs font-mono text-slate-300 focus:outline-none">
+                    <button onclick="copySyncUrl()" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs whitespace-nowrap transition flex items-center gap-1.5">
+                        <i class="fa-regular fa-copy"></i> 複製遙控連結
+                    </button>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="copyDisplayUrl()" class="flex-1 py-2.5 rounded-xl bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-500/40 text-indigo-300 font-bold text-xs transition flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-tv"></i> 複製純展示副螢幕連結
+                    </button>
+                    <button onclick="joinCustomRoomPrompt()" class="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 font-bold text-xs transition">
+                        輸入房號加入
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 彈窗 B：快速修訂時間 (快捷鍵 S) & 輸入房號 Modal -->
+    <!-- ========================================== -->
+    <div id="quickEditModal" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="glass-card bg-slate-900 border border-white/15 rounded-3xl max-w-sm w-full p-6 shadow-2xl">
+            <h3 class="font-black text-lg mb-1">快速修訂當前時間</h3>
+            <p class="text-xs opacity-70 mb-4">修改後將立即同步至主控端與所有連線裝置</p>
+            <div class="flex items-center justify-center gap-3 mb-5">
+                <div class="flex flex-col items-center">
+                    <label class="text-xs opacity-70 mb-1">分鐘</label>
+                    <input id="quickMinInput" type="number" min="0" max="999" class="w-24 py-3 rounded-2xl bg-black/40 border border-white/20 text-center text-2xl font-black font-mono focus:outline-none focus:border-blue-500">
+                </div>
+                <span class="text-2xl font-black mt-5">:</span>
+                <div class="flex flex-col items-center">
+                    <label class="text-xs opacity-70 mb-1">秒鐘</label>
+                    <input id="quickSecInput" type="number" min="0" max="59" class="w-24 py-3 rounded-2xl bg-black/40 border border-white/20 text-center text-2xl font-black font-mono focus:outline-none focus:border-blue-500">
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="closeQuickEditModal()" class="flex-1 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 font-bold text-sm">取消</button>
+                <button onclick="submitQuickEdit()" class="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm">確認套用</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 加入指定房間代碼 Modal -->
+    <div id="joinRoomModal" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="glass-card bg-slate-900 border border-white/15 rounded-3xl max-w-sm w-full p-6 shadow-2xl">
+            <h3 class="font-black text-lg mb-1">加入指定同步房間</h3>
+            <p class="text-xs opacity-70 mb-4">請輸入主控端顯示的 6 碼房間代碼</p>
+            <input id="joinRoomInput" type="text" maxlength="6" placeholder="例如：A8K92P" class="w-full py-3 px-4 rounded-2xl bg-black/40 border border-white/20 text-center text-2xl font-black font-mono uppercase tracking-widest mb-4 focus:outline-none focus:border-emerald-500">
+            <div class="flex gap-2">
+                <button onclick="document.getElementById('joinRoomModal').classList.add('hidden')" class="flex-1 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 font-bold text-sm">取消</button>
+                <button onclick="confirmJoinRoom()" class="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm">立即連線</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 彈窗 C：外觀、19款字體、PiP 材質與副螢幕樣式設定 Modal -->
+    <!-- ========================================== -->
+    <div id="settingsModal" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="glass-card bg-slate-900 border border-white/15 rounded-3xl max-w-2xl w-full max-h-[88vh] flex flex-col shadow-2xl overflow-hidden">
+            <div class="p-5 border-b border-white/10 flex items-center justify-between">
+                <h3 class="font-black text-lg flex items-center gap-2">
+                    <i class="fa-solid fa-palette text-amber-400"></i>
+                    <span>外觀字體、畫中畫 (PiP) 與副螢幕樣式設定</span>
+                </h3>
+                <button onclick="closeSettingsModal()" class="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="p-5 overflow-y-auto space-y-6 text-sm">
+                <!-- 1. 19 款計時字體風格 (雲端同步) -->
+                <div>
+                    <label class="block font-bold mb-2 text-blue-400">1. 主畫面計時字體風格 (19 款特色字型 · 雲端同步)</label>
+                    <select id="fontStyleSelect" onchange="changeFontStyle(this.value)" class="w-full p-3 rounded-xl bg-black/40 border border-white/15 font-bold focus:outline-none focus:border-blue-500"></select>
+                </div>
+
+                <!-- 2. 主題色系與卡片透明度 -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block font-bold mb-2">2. 介面主題背景</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button onclick="setAppTheme('theme-dark')" class="py-2 rounded-xl bg-slate-950 border border-white/20 text-xs font-bold">深邃黑</button>
+                            <button onclick="setAppTheme('theme-slate')" class="py-2 rounded-xl bg-slate-700 border border-white/20 text-xs font-bold">岩板灰</button>
+                            <button onclick="setAppTheme('theme-light')" class="py-2 rounded-xl bg-slate-100 text-slate-900 border border-slate-300 text-xs font-bold">純淨白</button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block font-bold mb-2">卡片毛玻璃透明度 (<span id="opacityValText">85%</span>)</label>
+                        <input type="range" min="30" max="100" value="85" oninput="setCardOpacity(this.value)" class="w-full accent-blue-500">
+                    </div>
+                </div>
+
+                <!-- 3. 畫中畫 (PiP) 1600x900 材質與排版 -->
+                <div class="p-4 rounded-2xl bg-black/30 border border-white/10 space-y-4">
+                    <div class="font-bold text-purple-400 flex items-center justify-between">
+                        <span>3. 畫中畫 (PiP) 懸浮視窗設定</span>
+                        <button onclick="togglePiP()" class="px-3 py-1 rounded-lg bg-purple-600 text-white text-xs">立即啟動/關閉 PiP</button>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs opacity-75 mb-1">PiP 背景材質 (6 種)</label>
+                            <select id="pipMaterialSelect" onchange="updatePipSettings()" class="w-full p-2.5 rounded-xl bg-black/40 border border-white/15 text-xs font-bold">
+                                <option value="classic-dark">經典深色 (Classic Dark)</option>
+                                <option value="frosted">磨砂玻璃 (Frosted Glass)</option>
+                                <option value="acrylic">壓克力半透 (Acrylic)</option>
+                                <option value="resin">高光樹脂 (Glossy Resin)</option>
+                                <option value="classic-light">經典淺色 (Classic Light)</option>
+                                <option value="transparent">純黑透明底 (High Contrast)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs opacity-75 mb-1">數字與副螢幕主色調</label>
+                            <input id="popoutColorPicker" type="color" value="#38bdf8" onchange="updatePopoutAppearance()" class="w-full h-10 rounded-xl bg-transparent cursor-pointer">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs opacity-75 mb-1">垂直高度平移 (<span id="offsetYVal">0</span>px)</label>
+                            <input id="popoutOffsetYSlider" type="range" min="-200" max="200" value="0" oninput="updatePopoutAppearance()" class="w-full accent-purple-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs opacity-75 mb-1">獨立縮放比例 (<span id="zoomScaleVal">100%</span>)</label>
+                            <input id="popoutZoomSlider" type="range" min="40" max="250" value="100" oninput="updatePopoutAppearance()" class="w-full accent-purple-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. 品牌 Logo 與自訂背景圖 -->
+                <div class="p-4 rounded-2xl bg-black/30 border border-white/10 space-y-3">
+                    <div class="font-bold text-emerald-400">4. 品牌 Logo 與背景圖片自訂</div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs opacity-75 mb-1">上傳品牌 Logo (PNG/SVG)</label>
+                            <input type="file" accept="image/*" onchange="handleLogoUpload(event)" class="text-xs file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-emerald-600 file:text-white file:font-bold">
+                        </div>
+                        <div>
+                            <label class="block text-xs opacity-75 mb-1">Logo 顯示方位與縮放</label>
+                            <div class="flex gap-2">
+                                <select id="logoPositionSelect" onchange="updateLogoSettings()" class="flex-1 p-2 rounded-xl bg-black/40 border border-white/15 text-xs">
+                                    <option value="top-left">左上角</option>
+                                    <option value="top-right">右上角</option>
+                                    <option value="bottom-left">左下角</option>
+                                    <option value="bottom-right">右下角</option>
+                                    <option value="top-center">正上方中央</option>
+                                </select>
+                                <input id="logoScaleSlider" type="range" min="40" max="200" value="100" oninput="updateLogoSettings()" class="w-24 accent-emerald-500">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-3 pt-2">
+                        <label class="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold cursor-pointer">
+                            <i class="fa-solid fa-image mr-1"></i> 上傳主畫面背景圖
+                            <input type="file" accept="image/*" onchange="handleBgUpload(event)" class="hidden">
+                        </label>
+                        <button onclick="clearCustomBgAndLogo()" class="px-3 py-1.5 rounded-xl bg-rose-500/20 text-rose-300 text-xs font-bold">清除圖片與 Logo</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast 提示訊息氣泡 (取代 alert) -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-[100] flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- ========================================== -->
+    <!-- 核心邏輯與 Firebase Firestore 雲端雙向同步引擎 -->
+    <!-- ========================================== -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // 19 款特色字體對照表 (CSS fontFamily 與 Canvas 字體名稱)
+        const FONT_STYLES = {
+            jetbrains: { label: 'JetBrains Mono (現代科技等寬)', css: "'JetBrains Mono', monospace", canvas: "800 260px 'JetBrains Mono', monospace" },
+            orbitron: { label: 'Orbitron (未來科幻賽博)', css: "'Orbitron', sans-serif", canvas: "900 240px 'Orbitron', sans-serif" },
+            sharetech: { label: 'Share Tech Mono (數位儀表)', css: "'Share Tech Mono', monospace", canvas: "700 270px 'Share Tech Mono', monospace" },
+            chakra: { label: 'Chakra Petch (電競裝甲)', css: "'Chakra Petch', sans-serif", canvas: "700 260px 'Chakra Petch', sans-serif" },
+            russo: { label: 'Russo One (厚實工業風)', css: "'Russo One', sans-serif", canvas: "700 250px 'Russo One', sans-serif" },
+            blackops: { label: 'Black Ops One (軍事戰術)', css: "'Black Ops One', cursive", canvas: "700 250px 'Black Ops One', cursive" },
+            anton: { label: 'Anton (極粗海報標題)', css: "'Anton', sans-serif", canvas: "700 280px 'Anton', sans-serif" },
+            bebas: { label: 'Bebas Neue (高挑修長大字)', css: "'Bebas Neue', sans-serif", canvas: "700 300px 'Bebas Neue', sans-serif" },
+            oswald: { label: 'Oswald (新聞頭條緊湊)', css: "'Oswald', sans-serif", canvas: "700 270px 'Oswald', sans-serif" },
+            teko: { label: 'Teko (極簡建築幾何)', css: "'Teko', sans-serif", canvas: "700 310px 'Teko', sans-serif" },
+            righteous: { label: 'Righteous (圓潤現代幾何)', css: "'Righteous', cursive", canvas: "700 260px 'Righteous', cursive" },
+            fredoka: { label: 'Fredoka (圓滾親和力)', css: "'Fredoka', sans-serif", canvas: "700 260px 'Fredoka', sans-serif" },
+            silkscreen: { label: 'Silkscreen (8-Bit 復古像素)', css: "'Silkscreen', cursive", canvas: "700 210px 'Silkscreen', cursive" },
+            pressstart: { label: 'Press Start 2P (經典街機)', css: "'Press Start 2P', cursive", canvas: "700 165px 'Press Start 2P', cursive" },
+            monoton: { label: 'Monoton (霓虹多線條)', css: "'Monoton', cursive", canvas: "400 220px 'Monoton', cursive" },
+            cinzel: { label: 'Cinzel (古典羅馬銘文)', css: "'Cinzel', serif", canvas: "900 240px 'Cinzel', serif" },
+            playfair: { label: 'Playfair Display (精品時尚襯線)', css: "'Playfair Display', serif", canvas: "800 250px 'Playfair Display', serif" },
+            courier: { label: 'Courier Prime (打字機手稿)', css: "'Courier Prime', monospace", canvas: "700 260px 'Courier Prime', monospace" },
+            pacifico: { label: 'Pacifico (手寫草書風格)', css: "'Pacifico', cursive", canvas: "400 230px 'Pacifico', cursive" }
+        };
+
+        // 裝置唯一識別碼 (避免自己寫入觸發自我迴圈)
+        const DEVICE_ID = 'dev_' + Math.random().toString(36).substring(2, 10) + '_' + Date.now();
+
+        // 解析網址參數 ?room=XXXXXX 與 ?view=display&remote=1
+        const urlParams = new URLSearchParams(window.location.search);
+        let currentRoomCode = (urlParams.get('room') || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
+        const isDisplayMode = urlParams.get('view') === 'display';
+        const isRemoteEntry = urlParams.get('remote') === '1' || (!!urlParams.get('room') && !isDisplayMode);
+
+        function createRandomRoomCode() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            let code = '';
+            for (let i = 0; i < 6; i++) {
+                code += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return code;
+        }
+
+        if (!currentRoomCode || currentRoomCode.length < 4) {
+            currentRoomCode = createRandomRoomCode();
+            syncUrlWithRoom(currentRoomCode, isDisplayMode ? 'display' : null);
+        }
+
+        function syncUrlWithRoom(roomCode, viewMode = null) {
+            try {
+                const url = new URL(window.location.href);
+                url.searchParams.set('room', roomCode);
+                if (viewMode === 'display') {
+                    url.searchParams.set('view', 'display');
+                } else {
+                    url.searchParams.delete('view');
+                }
+                window.history.replaceState({}, '', url.toString());
+            } catch (e) {
+                console.warn('history.replaceState skipped:', e);
+            }
+        }
+
+        // 全域雙向同步狀態物件
+        let state = {
+            mode: 'countdown',          // 'countdown' | 'stopwatch'
+            status: 'stopped',          // 'running' | 'paused' | 'stopped'
+            totalSeconds: 900,          // 預設 15 分鐘
+            remainingSeconds: 900,
+            stopwatchSeconds: 0,
+            targetEndTime: null,        // 倒數運行中的精確結束時間戳記 (ms)
+            startTimestamp: null,       // 碼錶運行中的精確起始時間戳記 (ms)
+            fontStyleKey: 'jetbrains',
+            isBlinking: true,
+            sections: [
+                { id: 'sec_1', title: '開場破冰與議程介紹', minutes: 3 },
+                { id: 'sec_2', title: '核心策略與市場洞察', minutes: 7 },
+                { id: 'sec_3', title: '解決方案與實機展示', minutes: 5 }
+            ],
+            currentSectionIndex: 0,
+            mainTopicTitle: '2026 年度策略與創新發表會',
+            showPopoutHeaderTitle: true,
+            popoutNotes: [
+                { id: 'note_1', text: '保持微笑，眼神與現場觀眾交流', active: true },
+                { id: 'note_2', text: '最後 2 分鐘請準備進入總結', active: false }
+            ],
+            qaItems: [
+                { id: 'qa_1', text: '請問新架構在跨裝置高併發下的延遲表現如何？' },
+                { id: 'qa_2', text: '預計下一季度的商業化落地時程規劃？' }
+            ],
+            activeQaId: null,
+            popoutColor: '#38bdf8',
+            popoutOffsetY: 0,
+            popoutZoomScale: 100,
+            popoutSectionColor: '#60a5fa',
+            popoutSectionSize: 36,
+            popoutSectionFont: 'Inter',
+            popoutNoteColor: '#fbbf24',
+            popoutNoteSize: 28,
+            popoutNoteFont: 'Inter',
+            popoutQaColor: '#c084fc',
+            popoutQaSize: 30,
+            popoutQaFont: 'Inter',
+            logoScale: 100,
+            logoPosition: 'top-left',
+            updatedAt: Date.now(),
+            updatedBy: DEVICE_ID
+        };
+
+        // 本機端非同步狀態
+        let soundEnabled = true;
+        let lastBeepSecond = -1;
+        let pipMaterial = 'classic-dark';
+        let customLogoDataUrl = '';
+        let popoutWindowRef = null;
+        let broadcastChannel = null;
+
+        // Firebase 變數
+        let db = null;
+        let auth = null;
+        let currentUser = null;
+        let unsubscribeRoom = null;
+        let isCloudConnected = false;
+        let hasInitializedRoomDoc = false;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'presentation-master-timer';
+
+        // 初始化 BroadcastChannel (同瀏覽器多分頁/副螢幕零延遲備援)
+        try {
+            broadcastChannel = new BroadcastChannel('pmt_sync_' + currentRoomCode);
+            broadcastChannel.onmessage = (event) => {
+                if (event.data && event.data.updatedBy !== DEVICE_ID) {
+                    applyRemoteState(event.data);
+                }
+            };
+        } catch (e) {}
+
+        // 初始化 Firebase 與雲端房間監聽
+        async function initFirebaseSync() {
+            updateConnectionUI('connecting');
+            try {
+                if (typeof __firebase_config === 'undefined') {
+                    console.warn('No firebase config found, running in local broadcast mode.');
+                    updateConnectionUI('local');
+                    return;
+                }
+                const firebaseConfig = JSON.parse(__firebase_config);
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    const cred = await signInWithCustomToken(auth, __initial_auth_token);
+                    currentUser = cred.user;
+                } else {
+                    const cred = await signInAnonymously(auth);
+                    currentUser = cred.user;
+                }
+
+                subscribeToCloudRoom(currentRoomCode);
+            } catch (err) {
+                console.error('Firebase init error:', err);
+                updateConnectionUI('error');
+                showToast('雲端連線異常，已切換為本機同步模式', 'warning');
+            }
+        }
+
+        function getRoomDocRef(roomCode) {
+            return doc(db, 'artifacts', appId, 'public', 'data', 'timer_rooms', roomCode);
+        }
+
+        function subscribeToCloudRoom(roomCode) {
+            if (!db || !currentUser) return;
+            if (unsubscribeRoom) {
+                unsubscribeRoom();
+                unsubscribeRoom = null;
+            }
+            hasInitializedRoomDoc = false;
+            updateConnectionUI('connecting');
+
+            const roomRef = getRoomDocRef(roomCode);
+            unsubscribeRoom = onSnapshot(roomRef, async (snapshot) => {
+                isCloudConnected = true;
+                updateConnectionUI('connected');
+
+                if (!snapshot.exists()) {
+                    // 若為新房間，寫入初始狀態建立房間文件
+                    if (!hasInitializedRoomDoc) {
+                        hasInitializedRoomDoc = true;
+                        await pushStateToCloud(true);
+                    }
+                    return;
+                }
+
+                hasInitializedRoomDoc = true;
+                const remoteData = snapshot.data();
+                if (remoteData && remoteData.updatedBy !== DEVICE_ID) {
+                    applyRemoteState(remoteData);
+                }
+            }, (error) => {
+                console.error('Firestore onSnapshot error:', error);
+                isCloudConnected = false;
+                updateConnectionUI('error');
+            });
+        }
+
+        // 將狀態寫入雲端房間並廣播
+        async function pushStateToCloud(isInitial = false) {
+            state.updatedAt = Date.now();
+            state.updatedBy = DEVICE_ID;
+
+            // 同步通知同瀏覽器開啟的副螢幕視窗
+            if (broadcastChannel) {
+                try { broadcastChannel.postMessage(state); } catch (e) {}
+            }
+            updatePopoutWindowDirectly();
+
+            if (!db || !currentUser) return;
+            try {
+                const roomRef = getRoomDocRef(currentRoomCode);
+                // 序列化巢狀物件確保 Firestore 相容性
+                const payload = {
+                    ...state,
+                    sections: JSON.stringify(state.sections),
+                    popoutNotes: JSON.stringify(state.popoutNotes),
+                    qaItems: JSON.stringify(state.qaItems)
+                };
+                await setDoc(roomRef, payload, { merge: true });
+            } catch (err) {
+                console.error('Failed to push state to cloud:', err);
+            }
+        }
+
+        // 接收遠端裝置 (手機/平板/主機/副螢幕) 更新並同步渲染
+        function applyRemoteState(remoteData) {
+            try {
+                const parsedSections = typeof remoteData.sections === 'string' ? JSON.parse(remoteData.sections) : (remoteData.sections || state.sections);
+                const parsedNotes = typeof remoteData.popoutNotes === 'string' ? JSON.parse(remoteData.popoutNotes) : (remoteData.popoutNotes || state.popoutNotes);
+                const parsedQa = typeof remoteData.qaItems === 'string' ? JSON.parse(remoteData.qaItems) : (remoteData.qaItems || state.qaItems);
+
+                state = {
+                    ...state,
+                    ...remoteData,
+                    sections: parsedSections,
+                    popoutNotes: parsedNotes,
+                    qaItems: parsedQa
+                };
+
+                // 零延遲時間戳記精確校準
+                recalculateExactTime();
+                renderAllUI();
+                updatePopoutWindowDirectly();
+            } catch (e) {
+                console.error('Error applying remote state:', e);
+            }
+        }
+
+        // 根據精確時間戳記計算當前剩餘/經過秒數
+        function recalculateExactTime() {
+            const now = Date.now();
+            if (state.status === 'running') {
+                if (state.mode === 'countdown' && state.targetEndTime) {
+                    const diffMs = state.targetEndTime - now;
+                    state.remainingSeconds = Math.ceil(diffMs / 1000);
+                } else if (state.mode === 'stopwatch' && state.startTimestamp) {
+                    const elapsedMs = now - state.startTimestamp;
+                    state.stopwatchSeconds = Math.max(0, Math.floor(elapsedMs / 1000));
+                }
+            }
+        }
+
+        // 高頻計時迴圈 (100ms 精準校準)
+        setInterval(() => {
+            if (state.status === 'running') {
+                const prevSec = state.mode === 'countdown' ? state.remainingSeconds : state.stopwatchSeconds;
+                recalculateExactTime();
+                const currSec = state.mode === 'countdown' ? state.remainingSeconds : state.stopwatchSeconds;
+
+                if (prevSec !== currSec) {
+                    handleSecondTickAudio(currSec);
+                }
+            }
+            updateTimerDisplayOnly();
+            drawPiPCanvas();
+            updatePopoutWindowDirectly();
+        }, 100);
+
+        // 警示音效 (Web Audio API)
+        function playBeep(freq = 880, duration = 0.15, type = 'sine') {
+            if (!soundEnabled) return;
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                const ctx = new AudioCtx();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, ctx.currentTime);
+                gain.gain.setValueAtTime(0.25, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + duration);
+            } catch (e) {}
+        }
+
+        function handleSecondTickAudio(sec) {
+            if (state.mode !== 'countdown' || !soundEnabled) return;
+            if (sec === lastBeepSecond) return;
+            lastBeepSecond = sec;
+            if (sec === 60) {
+                playBeep(660, 0.25, 'triangle');
+            } else if (sec <= 5 && sec > 0) {
+                playBeep(880, 0.14, 'sine');
+            } else if (sec === 0) {
+                playBeep(1046.5, 0.6, 'square');
+            }
+        }
+
+        // ==========================================
+        // 播控與操作指令 (皆雙向寫入雲端同步)
+        // ==========================================
+        window.toggleStartPause = function() {
+            const now = Date.now();
+            if (state.status === 'running') {
+                // 暫停：鎖定當前精確秒數
+                recalculateExactTime();
+                state.status = 'paused';
+                state.targetEndTime = null;
+                state.startTimestamp = null;
+            } else {
+                // 開始：寫入精確目標結束/起始時間戳記
+                state.status = 'running';
+                if (state.mode === 'countdown') {
+                    state.targetEndTime = now + state.remainingSeconds * 1000;
+                } else {
+                    state.startTimestamp = now - state.stopwatchSeconds * 1000;
+                }
+            }
+            renderAllUI();
+            pushStateToCloud();
+        };
+
+        window.resetTimer = function() {
+            state.status = 'stopped';
+            state.targetEndTime = null;
+            state.startTimestamp = null;
+            if (state.mode === 'countdown') {
+                state.remainingSeconds = state.totalSeconds;
+            } else {
+                state.stopwatchSeconds = 0;
+            }
+            lastBeepSecond = -1;
+            renderAllUI();
+            pushStateToCloud();
+        };
+
+        window.setTimerMode = function(newMode) {
+            if (state.mode === newMode) return;
+            state.mode = newMode;
+            state.status = 'stopped';
+            state.targetEndTime = null;
+            state.startTimestamp = null;
+            if (newMode === 'countdown') {
+                state.remainingSeconds = state.totalSeconds;
+            } else {
+                state.stopwatchSeconds = 0;
+            }
+            renderAllUI();
+            pushStateToCloud();
+        };
+
+        window.adjustMinutes = function(deltaMin) {
+            const deltaSec = deltaMin * 60;
+            if (state.mode === 'countdown') {
+                state.totalSeconds = Math.max(0, state.totalSeconds + deltaSec);
+                state.remainingSeconds = state.remainingSeconds + deltaSec;
+                if (state.status === 'running' && state.targetEndTime) {
+                    state.targetEndTime += deltaSec * 1000;
+                }
+            } else {
+                state.stopwatchSeconds = Math.max(0, state.stopwatchSeconds + deltaSec);
+                if (state.status === 'running' && state.startTimestamp) {
+                    state.startTimestamp -= deltaSec * 1000;
+                }
+            }
+            renderAllUI();
+            pushStateToCloud();
+            showToast(`${deltaMin > 0 ? '+' : ''}${deltaMin} 分鐘已同步`);
+        };
+
+        window.setPresetMinutes = function(mins) {
+            const secs = mins * 60;
+            state.mode = 'countdown';
+            state.status = 'stopped';
+            state.totalSeconds = secs;
+            state.remainingSeconds = secs;
+            state.targetEndTime = null;
+            document.getElementById('customMinInput').value = mins;
+            document.getElementById('customSecInput').value = 0;
+            renderAllUI();
+            pushStateToCloud();
+            showToast(`已設定為 ${mins} 分鐘`);
+        };
+
+        window.applyCustomTime = function() {
+            const m = Math.max(0, parseInt(document.getElementById('customMinInput').value || '0', 10));
+            const s = Math.max(0, Math.min(59, parseInt(document.getElementById('customSecInput').value || '0', 10)));
+            const total = m * 60 + s;
+            if (total <= 0) {
+                showToast('請輸入大於 0 的時間', 'warning');
+                return;
+            }
+            state.mode = 'countdown';
+            state.status = 'stopped';
+            state.totalSeconds = total;
+            state.remainingSeconds = total;
+            state.targetEndTime = null;
+            renderAllUI();
+            pushStateToCloud();
+            showToast(`已套用自訂時間 ${formatSeconds(total)}`);
+        };
+
+        window.openQuickEditModal = function() {
+            const currentVal = state.mode === 'countdown' ? Math.max(0, state.remainingSeconds) : state.stopwatchSeconds;
+            document.getElementById('quickMinInput').value = Math.floor(currentVal / 60);
+            document.getElementById('quickSecInput').value = currentVal % 60;
+            document.getElementById('quickEditModal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('quickMinInput').focus(), 50);
+        };
+
+        window.closeQuickEditModal = function() {
+            document.getElementById('quickEditModal').classList.add('hidden');
+        };
+
+        window.submitQuickEdit = function() {
+            const m = Math.max(0, parseInt(document.getElementById('quickMinInput').value || '0', 10));
+            const s = Math.max(0, Math.min(59, parseInt(document.getElementById('quickSecInput').value || '0', 10)));
+            const newSecs = m * 60 + s;
+            const now = Date.now();
+            if (state.mode === 'countdown') {
+                state.remainingSeconds = newSecs;
+                if (newSecs > state.totalSeconds) state.totalSeconds = newSecs;
+                if (state.status === 'running') {
+                    state.targetEndTime = now + newSecs * 1000;
+                }
+            } else {
+                state.stopwatchSeconds = newSecs;
+                if (state.status === 'running') {
+                    state.startTimestamp = now - newSecs * 1000;
+                }
+            }
+            closeQuickEditModal();
+            renderAllUI();
+            pushStateToCloud();
+            showToast(`時間已修訂為 ${formatSeconds(newSecs)}`);
+        };
+
+        window.toggleBlinkAlert = function() {
+            state.isBlinking = !state.isBlinking;
+            renderAllUI();
+            pushStateToCloud();
+        };
+
+        window.updateTopicTitle = function(val) {
+            state.mainTopicTitle = val.trim() || '簡報演講計時';
+            renderAllUI();
+            pushStateToCloud();
+        };
+
+        // ==========================================
+        // 章節、講者標語與 Q&A 雙向同步管理
+        // ==========================================
+        window.addSection = function() {
+            const titleEl = document.getElementById('newSectionTitle');
+            const minEl = document.getElementById('newSectionMinutes');
+            const title = titleEl.value.trim();
+            const mins = Math.max(1, parseInt(minEl.value || '5', 10));
+            if (!title) return;
+            state.sections.push({
+                id: 'sec_' + Date.now(),
+                title,
+                minutes: mins
+            });
+            titleEl.value = '';
+            renderAllUI();
+            pushStateToCloud();
+        };
+
+        window.selectSection = function(index, applyTime = false) {
+            if (index < 0 || index >= state.sections.length) return;
+            state.currentSectionIndex = index;
+            if (applyTime) {
+                const secs = state.sections[index].minutes * 60;
+                state.mode = 'countdown';
+                state.status = 'stopped';
+                state.totalSeconds = secs;
+                state.remainingSeconds = secs;
+                state.targetEndTime = null;
+            }
+            renderAllUI();
+            pushStateToCloud();
+            showToast(`切換章節：${state.sections[index].title}`);
+        };
+
+        window.moveSection = function(index, dir) {
+            const target = index + dir;
+            if (target < 0 || target >= state.sections.length) return;
+            const temp = state.sections[index];
+            state.sections[index] = state.sections[target];
+            state.sections[target] = temp;
+            if (state.currentSectionIndex === index) state.currentSectionIndex = target;
+            else if (state.currentSectionIndex === target) state.currentSectionIndex = index;
+            renderAllUI();
+            pushStateToCloud();
+        };
+
+        window.deleteSection = function(index) {
+            state.sections.splice(index, 1);
+            if (state.currentSectionIndex >= state.sections.length) {
+                state.currentSectionIndex = Math.max(0, state.sections.length - 1);
+            }
+            renderAllUI();
+            pushStateToCloud();
+        };
+
+        window.addPopoutNote = function() {
+            const input = document.getElementById('newNoteInput');
+            const text = input.value.trim();
+            if (!text) return;
+            state.popoutNotes.push({
+                id: 'note_' + Date.now(),
+                text,
+                active: true
+            });
+            input.value = '';
+            renderAllUI();
+            pushStateToCloud();
+        };
+
+        window.togglePopoutNote = function(id) {
+            const item = state.popoutNotes.find(n => n.id === id);
+            if (item) {
+                item.active = !item.active;
+                renderAllUI();
+                pushStateToCloud();
+            }
+        };
+
+        window.deletePopoutNote = function(id) {
+            state.popoutNotes = state.popoutNotes.filter(n => n.id !== id);
+            renderAllUI();
+            pushStateToCloud();
+        };
+
+        window.addQaItem = function() {
+            const input = document.getElementById('newQaInput');
+            const text = input.value.trim();
+            if (!text) return;
+            const newItem = { id: 'qa_' + Date.now(), text };
+            state.qaItems.push(newItem);
+            state.activeQaId = newItem.id;
+            input.value = '';
+            renderAllUI();
+            pushStateToCloud();
+        };
+
+        window.selectQaItem = function(id) {
+            state.activeQaId = (state.activeQaId === id) ? null : id;
+            renderAllUI();
+            pushStateToCloud();
+        };
+
+        window.clearActiveQa = function() {
+            state.activeQaId = null;
+            renderAllUI();
+            pushStateToCloud();
+        };
+
+        window.deleteQaItem = function(id) {
+            state.qaItems = state.qaItems.filter(q => q.id !== id);
+            if (state.activeQaId === id) state.activeQaId = null;
+            renderAllUI();
+            pushStateToCloud();
+        };
+
+        // ==========================================
+        // 跨裝置同步 QR 彈窗與房間切換邏輯
+        // ==========================================
+        window.openQrModal = function() {
+            document.getElementById('qrModal').classList.remove('hidden');
+            renderQrCode();
+        };
+
+        window.closeQrModal = function() {
+            document.getElementById('qrModal').classList.add('hidden');
+        };
+
+        function getShareUrls() {
+            const base = new URL(window.location.href);
+            base.search = '';
+            const remoteUrl = `${base.toString()}?room=${currentRoomCode}&remote=1`;
+            const displayUrl = `${base.toString()}?view=display&room=${currentRoomCode}`;
+            return { remoteUrl, displayUrl };
+        }
+
+        function renderQrCode() {
+            const container = document.getElementById('qrcodeContainer');
+            container.innerHTML = '';
+            const { remoteUrl } = getShareUrls();
+            document.getElementById('syncShareUrlInput').value = remoteUrl;
+            document.getElementById('modalRoomCodeDisplay').textContent = currentRoomCode;
+
+            new QRCode(container, {
+                text: remoteUrl,
+                width: 196,
+                height: 196,
+                colorDark: '#0f172a',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.M
+            });
+        }
+
+        window.generateNewRoom = function() {
+            currentRoomCode = createRandomRoomCode();
+            syncUrlWithRoom(currentRoomCode, isDisplayMode ? 'display' : null);
+            updateRoomBadges();
+            renderQrCode();
+            if (db && currentUser) {
+                subscribeToCloudRoom(currentRoomCode);
+            }
+            showToast(`已建立新同步房間 [${currentRoomCode}]`);
+        };
+
+        window.joinCustomRoomPrompt = function() {
+            document.getElementById('joinRoomInput').value = '';
+            document.getElementById('joinRoomModal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('joinRoomInput').focus(), 50);
+        };
+
+        window.confirmJoinRoom = function() {
+            const code = document.getElementById('joinRoomInput').value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+            if (code.length < 4) {
+                showToast('請輸入有效的房間代碼', 'warning');
+                return;
+            }
+            currentRoomCode = code;
+            syncUrlWithRoom(currentRoomCode, isDisplayMode ? 'display' : null);
+            document.getElementById('joinRoomModal').classList.add('hidden');
+            updateRoomBadges();
+            renderQrCode();
+            if (db && currentUser) {
+                subscribeToCloudRoom(currentRoomCode);
+            }
+            showToast(`已切換並連線至房間 [${currentRoomCode}]`);
+        };
+
+        window.copySyncUrl = function() {
+            const { remoteUrl } = getShareUrls();
+            copyTextFallback(remoteUrl, '已複製手機/平板遙控連結！');
+        };
+
+        window.copyDisplayUrl = function() {
+            const { displayUrl } = getShareUrls();
+            copyTextFallback(displayUrl, '已複製純展示副螢幕連結！');
+        };
+
+        function copyTextFallback(text, successMsg) {
+            const tempInput = document.createElement('input');
+            tempInput.value = text;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            showToast(successMsg);
+        }
+
+        window.switchToPureDisplayMode = function() {
+            syncUrlWithRoom(currentRoomCode, 'display');
+            document.getElementById('controllerView').classList.add('hidden');
+            document.getElementById('remoteControlBanner').classList.add('hidden');
+            document.getElementById('pureDisplayView').classList.remove('hidden');
+            renderAllUI();
+        };
+
+        window.switchToControllerMode = function() {
+            syncUrlWithRoom(currentRoomCode, null);
+            document.getElementById('pureDisplayView').classList.add('hidden');
+            document.getElementById('controllerView').classList.remove('hidden');
+            if (isRemoteEntry) {
+                document.getElementById('remoteControlBanner').classList.remove('hidden');
+            }
+            renderAllUI();
+        };
+
+        window.handleDisplayClick = function(e) {
+            if (e.target.closest('.no-toggle')) return;
+            toggleStartPause();
+        };
+
+        // ==========================================
+        // 獨立副螢幕視窗 (Popout Window) 雙向連動
+        // ==========================================
+        window.openPopoutWindow = function() {
+            const { displayUrl } = getShareUrls();
+            popoutWindowRef = window.open(displayUrl, 'PresentationMasterDisplay_' + currentRoomCode, 'width=1280,height=720,menubar=no,toolbar=no,location=no,status=no');
+            if (!popoutWindowRef) {
+                showToast('請允許瀏覽器開啟彈出視窗，或直接複製副螢幕連結', 'warning');
+            } else {
+                showToast('已開啟同步副螢幕視窗');
+            }
+        };
+
+        function updatePopoutWindowDirectly() {
+            // 副螢幕透過同網址參數 ?view=display&room=XXXXXX 與 BroadcastChannel/Firestore 自動即時同步
+        }
+
+        // ==========================================
+        // 畫中畫 (PiP) 1600x900 Canvas 引擎
+        // ==========================================
+        const pipCanvas = document.getElementById('pipCanvas');
+        const pipCtx = pipCanvas.getContext('2d');
+        const pipVideo = document.getElementById('pipVideo');
+        let isPiPActive = false;
+
+        function drawPiPCanvas() {
+            if (!pipCtx) return;
+            const w = 1600;
+            const h = 900;
+            pipCtx.clearRect(0, 0, w, h);
+
+            // 6 種背景材質繪製
+            if (pipMaterial === 'classic-light') {
+                pipCtx.fillStyle = '#f8fafc';
+                pipCtx.fillRect(0, 0, w, h);
+            } else if (pipMaterial === 'frosted') {
+                const grad = pipCtx.createLinearGradient(0, 0, w, h);
+                grad.addColorStop(0, '#1e293b');
+                grad.addColorStop(1, '#0f172a');
+                pipCtx.fillStyle = grad;
+                pipCtx.fillRect(0, 0, w, h);
+                pipCtx.strokeStyle = 'rgba(255,255,255,0.2)';
+                pipCtx.lineWidth = 12;
+                pipCtx.strokeRect(16, 16, w - 32, h - 32);
+            } else if (pipMaterial === 'acrylic') {
+                pipCtx.fillStyle = '#111827';
+                pipCtx.fillRect(0, 0, w, h);
+                pipCtx.fillStyle = 'rgba(59, 130, 246, 0.14)';
+                pipCtx.fillRect(0, 0, w, h / 2);
+            } else if (pipMaterial === 'resin') {
+                const grad = pipCtx.createRadialGradient(w / 2, h / 3, 50, w / 2, h / 2, w * 0.7);
+                grad.addColorStop(0, '#1e1b4b');
+                grad.addColorStop(1, '#030712');
+                pipCtx.fillStyle = grad;
+                pipCtx.fillRect(0, 0, w, h);
+            } else if (pipMaterial === 'transparent') {
+                pipCtx.fillStyle = '#000000';
+                pipCtx.fillRect(0, 0, w, h);
+            } else {
+                pipCtx.fillStyle = '#090d16';
+                pipCtx.fillRect(0, 0, w, h);
+            }
+
+            const isLight = pipMaterial === 'classic-light';
+            const sec = state.mode === 'countdown' ? state.remainingSeconds : state.stopwatchSeconds;
+            const timeStr = formatSeconds(sec);
+
+            // 判斷顏色
+            let mainColor = state.popoutColor || '#38bdf8';
+            if (state.mode === 'countdown') {
+                if (sec < 0) mainColor = '#ef4444';
+                else if (sec <= 60 && state.status === 'running') mainColor = '#f59e0b';
+            }
+
+            // 當前章節標題
+            const activeSecObj = state.sections[state.currentSectionIndex];
+            pipCtx.fillStyle = isLight ? '#334155' : '#94a3b8';
+            pipCtx.font = "700 44px 'Inter', 'Noto Sans TC', sans-serif";
+            pipCtx.textAlign = 'center';
+            pipCtx.fillText(activeSecObj ? activeSecObj.title : state.mainTopicTitle, w / 2, 130);
+
+            // 主計時大字 (支援垂直平移與縮放)
+            const fontObj = FONT_STYLES[state.fontStyleKey] || FONT_STYLES.jetbrains;
+            const scale = (state.popoutZoomScale || 100) / 100;
+            const offsetY = Number(state.popoutOffsetY || 0);
+
+            pipCtx.save();
+            pipCtx.translate(w / 2, h / 2 + 40 + offsetY);
+            pipCtx.scale(scale, scale);
+            pipCtx.fillStyle = mainColor;
+            pipCtx.font = fontObj.canvas;
+            pipCtx.textAlign = 'center';
+            pipCtx.textBaseline = 'middle';
+            pipCtx.fillText(timeStr, 0, 0);
+            pipCtx.restore();
+
+            // 底部進度條
+            const ratio = state.mode === 'countdown' && state.totalSeconds > 0
+                ? Math.max(0, Math.min(1, state.remainingSeconds / state.totalSeconds))
+                : 1;
+            pipCtx.fillStyle = isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.12)';
+            pipCtx.fillRect(120, h - 90, w - 240, 26);
+            pipCtx.fillStyle = mainColor;
+            pipCtx.fillRect(120, h - 90, (w - 240) * ratio, 26);
+        }
+
+        window.togglePiP = async function() {
+            try {
+                if (document.pictureInPictureElement) {
+                    await document.exitPictureInPicture();
+                    isPiPActive = false;
+                    return;
+                }
+                drawPiPCanvas();
+                const stream = pipCanvas.captureStream(15);
+                pipVideo.srcObject = stream;
+                await pipVideo.play();
+                await pipVideo.requestPictureInPicture();
+                isPiPActive = true;
+
+                // MediaSession 系統媒體懸浮控制連動
+                if ('mediaSession' in navigator) {
+                    navigator.mediaSession.setActionHandler('play', () => toggleStartPause());
+                    navigator.mediaSession.setActionHandler('pause', () => toggleStartPause());
+                    navigator.mediaSession.setActionHandler('stop', () => resetTimer());
+                }
+                showToast('已啟動懸浮畫中畫 (PiP)');
+            } catch (err) {
+                console.error('PiP error:', err);
+                showToast('目前瀏覽器不支援或需先互動才能開啟畫中畫', 'warning');
+            }
+        };
+
+        // ==========================================
+        // 外觀設定、字型、主題、Logo 與背景上傳
+        // ==========================================
+        window.openSettingsModal = function() {
+            document.getElementById('settingsModal').classList.remove('hidden');
+        };
+        window.closeSettingsModal = function() {
+            document.getElementById('settingsModal').classList.add('hidden');
+        };
+
+        window.changeFontStyle = function(key) {
+            state.fontStyleKey = key;
+            renderAllUI();
+            pushStateToCloud();
+        };
+
+        window.setAppTheme = function(themeClass) {
+            document.body.classList.remove('theme-dark', 'theme-slate', 'theme-light');
+            document.body.classList.add(themeClass);
+        };
+
+        window.setCardOpacity = function(val) {
+            document.documentElement.style.setProperty('--card-opacity', (val / 100).toFixed(2));
+            document.getElementById('opacityValText').textContent = val + '%';
+        };
+
+        window.updatePipSettings = function() {
+            pipMaterial = document.getElementById('pipMaterialSelect').value;
+            drawPiPCanvas();
+        };
+
+        window.updatePopoutAppearance = function() {
+            state.popoutColor = document.getElementById('popoutColorPicker').value;
+            state.popoutOffsetY = parseInt(document.getElementById('popoutOffsetYSlider').value, 10);
+            state.popoutZoomScale = parseInt(document.getElementById('popoutZoomSlider').value, 10);
+            document.getElementById('offsetYVal').textContent = state.popoutOffsetY;
+            document.getElementById('zoomScaleVal').textContent = state.popoutZoomScale + '%';
+            renderAllUI();
+            pushStateToCloud();
+        };
+
+        window.handleLogoUpload = function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                customLogoDataUrl = ev.target.result;
+                applyLogoOverlay();
+                showToast('品牌 Logo 已套用');
+            };
+            reader.readAsDataURL(file);
+        };
+
+        window.updateLogoSettings = function() {
+            state.logoPosition = document.getElementById('logoPositionSelect').value;
+            state.logoScale = parseInt(document.getElementById('logoScaleSlider').value, 10);
+            applyLogoOverlay();
+            pushStateToCloud();
+        };
+
+        function applyLogoOverlay() {
+            const overlay = document.getElementById('mainLogoOverlay');
+            const img = document.getElementById('mainLogoImg');
+            if (!customLogoDataUrl) {
+                overlay.classList.add('hidden');
+                return;
+            }
+            img.src = customLogoDataUrl;
+            const baseHeight = 52 * ((state.logoScale || 100) / 100);
+            img.style.height = baseHeight + 'px';
+
+            overlay.className = 'fixed z-30 pointer-events-none transition-all duration-300';
+            if (state.logoPosition === 'top-left') overlay.classList.add('top-20', 'left-5');
+            else if (state.logoPosition === 'top-right') overlay.classList.add('top-20', 'right-5');
+            else if (state.logoPosition === 'bottom-left') overlay.classList.add('bottom-5', 'left-5');
+            else if (state.logoPosition === 'bottom-right') overlay.classList.add('bottom-5', 'right-5');
+            else if (state.logoPosition === 'top-center') overlay.classList.add('top-20', 'left-1/2', '-translate-x-1/2');
+        }
+
+        window.handleBgUpload = function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                document.body.style.backgroundImage = `url('${ev.target.result}')`;
+                showToast('自訂背景圖片已套用');
+            };
+            reader.readAsDataURL(file);
+        };
+
+        window.clearCustomBgAndLogo = function() {
+            document.body.style.backgroundImage = '';
+            customLogoDataUrl = '';
+            applyLogoOverlay();
+            showToast('已清除自訂圖片與 Logo');
+        };
+
+        window.toggleSound = function() {
+            soundEnabled = !soundEnabled;
+            const icon = document.getElementById('soundIcon');
+            icon.className = soundEnabled ? 'fa-solid fa-volume-high text-blue-400' : 'fa-solid fa-volume-xmark text-slate-500';
+            if (soundEnabled) playBeep(780, 0.1);
+        };
+
+        window.switchRightTab = function(tab) {
+            ['sections', 'notes', 'qa'].forEach(t => {
+                const btn = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1) + 'Btn');
+                const panel = document.getElementById('panel' + t.charAt(0).toUpperCase() + t.slice(1));
+                if (t === tab) {
+                    btn.className = 'py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-blue-600 text-white shadow transition flex items-center justify-center gap-1.5';
+                    panel.classList.remove('hidden');
+                } else {
+                    btn.className = 'py-2.5 rounded-xl text-xs sm:text-sm font-bold text-slate-400 hover:text-white transition flex items-center justify-center gap-1.5';
+                    panel.classList.add('hidden');
+                }
+            });
+        };
+
+        // ==========================================
+        // UI 渲染與格式化函式
+        // ==========================================
+        function formatSeconds(totalSec) {
+            const isNeg = totalSec < 0;
+            const abs = Math.abs(Math.floor(totalSec));
+            const h = Math.floor(abs / 3600);
+            const m = Math.floor((abs % 3600) / 60);
+            const s = abs % 60;
+            const pad = (n) => String(n).padStart(2, '0');
+            const core = h > 0 ? `${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
+            return isNeg ? `-${core}` : core;
+        }
+
+        function updateConnectionUI(status) {
+            const dot = document.getElementById('syncStatusDot');
+            const badge = document.getElementById('modalCloudStatusBadge');
+            if (status === 'connected') {
+                dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]';
+                badge.className = 'px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5';
+                badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400"></span><span>雲端即時已連線</span>';
+            } else if (status === 'connecting') {
+                dot.className = 'w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse';
+                badge.className = 'px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1.5';
+                badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span><span>雲端連線中...</span>';
+            } else {
+                dot.className = 'w-2.5 h-2.5 rounded-full bg-sky-400';
+                badge.className = 'px-2.5 py-1 rounded-full text-xs font-bold bg-sky-500/20 text-sky-300 border border-sky-500/30 flex items-center gap-1.5';
+                badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-sky-400"></span><span>本機同步就緒</span>';
+            }
+        }
+
+        function updateRoomBadges() {
+            document.getElementById('navRoomCode').textContent = currentRoomCode;
+            document.getElementById('bannerRoomCode').textContent = currentRoomCode;
+            document.getElementById('dispRoomCode').textContent = currentRoomCode;
+        }
+
+        function updateTimerDisplayOnly() {
+            const sec = state.mode === 'countdown' ? state.remainingSeconds : state.stopwatchSeconds;
+            const formatted = formatSeconds(sec);
+
+            const mainDisp = document.getElementById('mainTimeDisplay');
+            const dispText = document.getElementById('dispTimeText');
+            const mainCard = document.getElementById('mainTimerCard');
+            const mainBar = document.getElementById('mainProgressBar');
+            const dispBar = document.getElementById('dispProgressBar');
+
+            mainDisp.textContent = formatted;
+            dispText.textContent = formatted;
+
+            // 字型套用
+            const fontObj = FONT_STYLES[state.fontStyleKey] || FONT_STYLES.jetbrains;
+            mainDisp.style.fontFamily = fontObj.css;
+            dispText.style.fontFamily = fontObj.css;
+
+            // 顏色與警示判斷
+            let textColor = '';
+            let barClass = 'bg-gradient-to-r from-emerald-400 via-blue-500 to-indigo-500';
+            let isUrgent = false;
+
+            if (state.mode === 'countdown') {
+                if (sec < 0) {
+                    textColor = '#ef4444';
+                    barClass = 'bg-rose-500';
+                    isUrgent = true;
+                } else if (sec <= 60 && state.status === 'running') {
+                    textColor = '#f59e0b';
+                    barClass = 'bg-amber-500';
+                    isUrgent = sec <= 15;
+                }
+            }
+
+            mainDisp.style.color = textColor || '';
+            dispText.style.color = textColor || state.popoutColor || '#38bdf8';
+
+            if (isUrgent && state.isBlinking && state.status === 'running') {
+                mainDisp.classList.add('animate-urgent-blink');
+                dispText.classList.add('animate-urgent-blink');
+                mainCard.classList.add('urgent-border-glow');
+            } else {
+                mainDisp.classList.remove('animate-urgent-blink');
+                dispText.classList.remove('animate-urgent-blink');
+                mainCard.classList.remove('urgent-border-glow');
+            }
+
+            // 進度條寬度
+            const pct = state.mode === 'countdown' && state.totalSeconds > 0
+                ? Math.max(0, Math.min(100, (state.remainingSeconds / state.totalSeconds) * 100))
+                : 100;
+            mainBar.style.width = pct + '%';
+            dispBar.style.width = pct + '%';
+            mainBar.className = `h-full rounded-full transition-all duration-300 ${barClass}`;
+        }
+
+        function renderAllUI() {
+            updateRoomBadges();
+            updateTimerDisplayOnly();
+
+            // 模式按鈕狀態
+            const cdBtn = document.getElementById('modeCountdownBtn');
+            const swBtn = document.getElementById('modeStopwatchBtn');
+            if (state.mode === 'countdown') {
+                cdBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition bg-blue-600 text-white shadow';
+                swBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white';
+            } else {
+                swBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition bg-blue-600 text-white shadow';
+                cdBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white';
+            }
+
+            // 開始/暫停按鈕狀態與徽章
+            const spBtn = document.getElementById('startPauseBtn');
+            const spIcon = document.getElementById('startPauseIcon');
+            const spText = document.getElementById('startPauseText');
+            const badge = document.getElementById('statusBadge');
+            const dispStatus = document.getElementById('dispStatusText');
+
+            if (state.status === 'running') {
+                spBtn.className = 'col-span-8 py-4 sm:py-5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white font-black text-lg sm:text-xl shadow-xl shadow-amber-600/25 flex items-center justify-center gap-3 active:scale-[0.98] transition';
+                spIcon.className = 'fa-solid fa-pause';
+                spText.textContent = '暫停計時';
+                badge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5';
+                badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span><span>計時進行中</span>';
+                dispStatus.textContent = '計時進行中';
+            } else {
+                spBtn.className = 'col-span-8 py-4 sm:py-5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black text-lg sm:text-xl shadow-xl shadow-emerald-600/25 flex items-center justify-center gap-3 active:scale-[0.98] transition';
+                spIcon.className = 'fa-solid fa-play';
+                spText.textContent = state.status === 'paused' ? '繼續計時' : '開始計時';
+                badge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-slate-500/20 text-slate-300 border border-slate-500/30 flex items-center gap-1.5';
+                badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-slate-400"></span><span>${state.status === 'paused' ? '已暫停' : '準備就緒'}</span>`;
+                dispStatus.textContent = state.status === 'paused' ? '已暫停' : '準備就緒';
+            }
+
+            // 閃爍警示文字
+            document.getElementById('blinkStateText').textContent = state.isBlinking ? '開' : '關';
+
+            // 主題與當前章節
+            const topicInput = document.getElementById('mainTopicInput');
+            if (document.activeElement !== topicInput) {
+                topicInput.value = state.mainTopicTitle;
+            }
+            document.getElementById('dispHeaderTitle').textContent = state.mainTopicTitle;
+
+            const curSec = state.sections[state.currentSectionIndex];
+            const secTitle = curSec ? curSec.title : '自由演講階段';
+            document.getElementById('activeSectionLabel').textContent = secTitle;
+            document.getElementById('dispSectionTitle').textContent = secTitle;
+
+            // 渲染章節清單
+            const secListEl = document.getElementById('sectionsList');
+            secListEl.innerHTML = state.sections.map((sec, idx) => {
+                const isActive = idx === state.currentSectionIndex;
+                return `
+                    <div class="p-3 rounded-2xl border transition flex items-center justify-between gap-2 ${isActive ? 'bg-blue-600/20 border-blue-500 shadow-sm' : 'bg-black/20 border-white/10 hover:bg-white/5'}">
+                        <div class="flex-1 min-w-0 cursor-pointer" onclick="selectSection(${idx}, false)">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-black px-2 py-0.5 rounded-md ${isActive ? 'bg-blue-500 text-white' : 'bg-white/10'}">${idx + 1}</span>
+                                <span class="font-bold text-xs sm:text-sm truncate">${escapeHtml(sec.title)}</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-1 shrink-0">
+                            <button onclick="selectSection(${idx}, true)" class="px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-xs font-bold" title="切換並套用此章節 ${sec.minutes} 分鐘">
+                                ${sec.minutes}分 <i class="fa-solid fa-play text-[10px] ml-0.5"></i>
+                            </button>
+                            <button onclick="moveSection(${idx}, -1)" class="p-1.5 rounded-lg hover:bg-white/10 text-xs opacity-70"><i class="fa-solid fa-chevron-up"></i></button>
+                            <button onclick="moveSection(${idx}, 1)" class="p-1.5 rounded-lg hover:bg-white/10 text-xs opacity-70"><i class="fa-solid fa-chevron-down"></i></button>
+                            <button onclick="deleteSection(${idx})" class="p-1.5 rounded-lg hover:bg-rose-500/20 text-rose-400 text-xs"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // 渲染講者備忘標語
+            const notesListEl = document.getElementById('notesList');
+            notesListEl.innerHTML = state.popoutNotes.map(note => `
+                <div class="p-3 rounded-2xl border ${note.active ? 'bg-amber-500/15 border-amber-500/40' : 'bg-black/20 border-white/10 opacity-60'} flex items-center justify-between gap-2">
+                    <label class="flex items-center gap-2.5 flex-1 cursor-pointer min-w-0">
+                        <input type="checkbox" ${note.active ? 'checked' : ''} onchange="togglePopoutNote('${note.id}')" class="w-4 h-4 accent-amber-500 rounded">
+                        <span class="font-bold text-xs sm:text-sm truncate">${escapeHtml(note.text)}</span>
+                    </label>
+                    <button onclick="deletePopoutNote('${note.id}')" class="p-1.5 rounded-lg hover:bg-rose-500/20 text-rose-400 text-xs"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            `).join('');
+
+            // 副螢幕標語更新
+            const activeNotes = state.popoutNotes.filter(n => n.active);
+            document.getElementById('dispNotesBox').innerHTML = activeNotes.map(n => `
+                <div class="inline-block px-5 py-2 rounded-2xl bg-amber-500/20 border border-amber-400/40 text-amber-300 font-bold text-lg sm:text-2xl mx-1">
+                    <i class="fa-solid fa-bullhorn mr-2"></i>${escapeHtml(n.text)}
+                </div>
+            `).join('');
+
+            // 渲染 Q&A 清單
+            const qaListEl = document.getElementById('qaList');
+            qaListEl.innerHTML = state.qaItems.map(qa => {
+                const isSelected = qa.id === state.activeQaId;
+                return `
+                    <div class="p-3 rounded-2xl border transition flex items-center justify-between gap-2 ${isSelected ? 'bg-purple-600/25 border-purple-400 shadow-md' : 'bg-black/20 border-white/10 hover:bg-white/5'}">
+                        <div onclick="selectQaItem('${qa.id}')" class="flex-1 cursor-pointer text-xs sm:text-sm font-bold leading-snug">
+                            <i class="fa-solid fa-circle-question text-purple-400 mr-1.5"></i>${escapeHtml(qa.text)}
+                        </div>
+                        <button onclick="deleteQaItem('${qa.id}')" class="p-1.5 rounded-lg hover:bg-rose-500/20 text-rose-400 text-xs shrink-0"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                `;
+            }).join('');
+
+            // 高亮 Q&A 顯示於主控端與副螢幕
+            const activeQa = state.qaItems.find(q => q.id === state.activeQaId);
+            const ctrlQaCard = document.getElementById('controllerActiveQaCard');
+            const dispQaBox = document.getElementById('dispQaBox');
+            if (activeQa) {
+                ctrlQaCard.classList.remove('hidden');
+                document.getElementById('controllerActiveQaText').textContent = activeQa.text;
+                dispQaBox.classList.remove('hidden');
+                document.getElementById('dispQaText').textContent = activeQa.text;
+            } else {
+                ctrlQaCard.classList.add('hidden');
+                dispQaBox.classList.add('hidden');
+            }
+
+            // 同步設定表單控制項
+            const fontSelect = document.getElementById('fontStyleSelect');
+            if (fontSelect && fontSelect.value !== state.fontStyleKey) {
+                fontSelect.value = state.fontStyleKey;
+            }
+            applyLogoOverlay();
+        }
+
+        function escapeHtml(str) {
+            return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+        }
+
+        function showToast(msg, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const el = document.createElement('div');
+            const colors = type === 'warning'
+                ? 'bg-amber-600 text-white border-amber-400'
+                : 'bg-slate-800/95 text-white border-white/15';
+            el.className = `px-4 py-2.5 rounded-xl border shadow-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all duration-300 ${colors}`;
+            el.innerHTML = `<i class="fa-solid ${type === 'warning' ? 'fa-triangle-exclamation' : 'fa-circle-check text-emerald-400'}"></i><span>${escapeHtml(msg)}</span>`;
+            container.appendChild(el);
+            setTimeout(() => {
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(8px)';
+                setTimeout(() => el.remove(), 300);
+            }, 2600);
+        }
+
+        // 全域鍵盤快捷鍵 (Space 開始/暫停、R 重置、S 快改時間)
+        window.addEventListener('keydown', (e) => {
+            if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
+                if (e.key === 'Enter' && !document.getElementById('quickEditModal').classList.contains('hidden')) {
+                    submitQuickEdit();
+                }
+                return;
+            }
+            if (e.code === 'Space') {
+                e.preventDefault();
+                toggleStartPause();
+            } else if (e.key === 'r' || e.key === 'R') {
+                e.preventDefault();
+                resetTimer();
+            } else if (e.key === 's' || e.key === 'S') {
+                e.preventDefault();
+                openQuickEditModal();
+            }
+        });
+
+        // 啟動初始化
+        function bootstrap() {
+            // 填入 19 款字型選項
+            const fontSelect = document.getElementById('fontStyleSelect');
+            Object.entries(FONT_STYLES).forEach(([key, info]) => {
+                const opt = document.createElement('option');
+                opt.value = key;
+                opt.textContent = info.label;
+                fontSelect.appendChild(opt);
+            });
+
+            // 檢查入口視圖模式
+            if (isDisplayMode) {
+                document.getElementById('controllerView').classList.add('hidden');
+                document.getElementById('pureDisplayView').classList.remove('hidden');
+            } else if (isRemoteEntry) {
+                document.getElementById('remoteControlBanner').classList.remove('hidden');
+            }
+
+            renderAllUI();
+            initFirebaseSync();
+        }
+
+        window.addEventListener('DOMContentLoaded', bootstrap);
+    </script>
+</body>
+</html>
